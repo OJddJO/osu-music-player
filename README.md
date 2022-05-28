@@ -10,4 +10,6 @@ A music player that import automatically your osu! songs
 
 Open osu!player file to run the app
 
+# Version:
+
 -V1.0 : Release
