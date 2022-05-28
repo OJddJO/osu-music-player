@@ -6,7 +6,7 @@ A music player that import automatically your osu! songs
 
 # How to install
 
-**THE 'osu!player' DIRECTORY NEED TO BE IN YOUR MUSIC DIRECTORY**
+**Copy the 'osu!player' directory into your Music directory**
 
 Open osu!player file to run the app
 
