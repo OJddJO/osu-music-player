@@ -4,6 +4,8 @@ A music player that import automatically your osu! songs
 
 *Written in Python , uses Python 3.10*
 
+# How to install
+
 **THE 'osu!player' DIRECTORY NEED TO BE IN YOUR MUSIC DIRECTORY**
 
 Open osu!player file to run the app
