@@ -2,11 +2,13 @@ import shutil
 import os
 from time import sleep
 
+user = os.getlogin()
+
 def export():
     titles = []
 
-    src = "C:\\Users\\User\\AppData\\Local\\osu!\\Songs"
-    dst = "C:\\Users\\User\\Music\\osu!player\\Osu"
+    src = f"C:\\Users\\{user}\\AppData\\Local\\osu!\\Songs"
+    dst = f"C:\\Users\\{user}\\Music\\osu!player\\Osu"
 
     files = os.listdir(src)
 
@@ -37,6 +39,5 @@ def export():
         else:
             path = dst + "\\" + song
             os.remove(path)
-    
-    files = os.listdir(dst)
+    files = test
     return files

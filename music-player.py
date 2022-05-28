@@ -6,21 +6,27 @@ from tkinter import filedialog
 import os
 import export_osu_song
 
+user = os.getlogin()
+
 #add many songs to the playlist
 def importSongs():
     #a list of songs is returned 
     temp_song=export_osu_song.export()
     #loop through everyitem in the list
     for s in temp_song:
-        if s != 'AlbumArtSmall.jpg':
-            s=s.replace("C:/Users/User/Music/osu!player/Osu/","")
+        if s != 'AlbumArtSmall.jpg' or s != 'Folder.jpg':
+            s=s.replace(f"C:/Users/{user}/Music/osu!player/Osu/","")
             songs_list.insert(END,s)
 
 def addsongs():
-    temp_song= os.listdir("C:/Users/User/Music/osu!player/Osu/")
+    temp_song= []
+    tmp = os.listdir(f"C:/Users/{user}/Music/osu!player/Osu/")
+    for song in tmp:
+        if song.endswith("mp3"):
+            temp_song.append(song)
     for s in temp_song:
-        if s != 'AlbumArtSmall.jpg':
-            s=s.replace("C:/Users/User/Music/osu!player/Osu/","")
+        if s != 'AlbumArtSmall.jpg' or s != 'Folder.jpg':
+            s=s.replace(f"C:/Users/{user}/Music/osu!player/Osu/")
             songs_list.insert(END,s)
    
 def deletesong():
@@ -30,7 +36,7 @@ def deletesong():
     
 def Play():
     song=songs_list.get(ACTIVE)
-    song=f'C:/Users/User/Music/osu!player/Osu/{song}'
+    song=f'C:/Users/{user}/Music/osu!player/Osu/{song}'
     mixer.music.load(song)
     mixer.music.play()
 
@@ -56,7 +62,7 @@ def Previous():
     previous_one=previous_one[0]-1
     #to get the previous song
     temp2=songs_list.get(previous_one)
-    temp2=f'C:/Users/User/Music/osu!player/Osu/{temp2}'
+    temp2=f'C:/Users/{user}/Music/osu!player/Osu/{temp2}'
     mixer.music.load(temp2)
     mixer.music.play()
     songs_list.selection_clear(0,END)
@@ -72,7 +78,7 @@ def Next():
     next_one=next_one[0]+1
     #to get the next song 
     temp=songs_list.get(next_one)
-    temp=f'C:/Users/User/Music/osu!player/Osu/{temp}'
+    temp=f'C:/Users/{user}/Music/osu!player/Osu/{temp}'
     mixer.music.load(temp)
     mixer.music.play()
     songs_list.selection_clear(0,END)
@@ -131,6 +137,6 @@ add_song_menu.add_command(label="Import Songs From Osu!",command=importSongs)
 add_song_menu.add_command(label="Import Playlist",command=addsongs)
 add_song_menu.add_command(label="Delete song",command=deletesong)
 
-addsongs()
+importSongs()
 
 mainloop()
