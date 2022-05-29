@@ -30,7 +30,7 @@ def changeStatus():
                 state=state,
                 details=desc,
                 start=start,
-                buttons=[{"label": "Download the app", "url": "https://github.com/OJddJO/osu-music-player"}]
+                buttons=[{"label": "Download the app", "url": "https://github.com/OJddJO/osu-music-player.exe"}]
             )
         except:
             pass
