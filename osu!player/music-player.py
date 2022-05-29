@@ -1,12 +1,42 @@
 from pygame import mixer
 from tkinter import *
+from pypresence import Presence
+from time import time, sleep
 import os
+import sys
 import export_osu_song
+import threading
 
 user = os.getlogin()
 
-def importSongs():
+state = "Idle"
+desc = "   "
 
+#RPC
+start = time()
+clientid = '980519752025931836'
+RPC = Presence(clientid)
+RPC.connect()
+run = True
+
+def changeStatus():
+    global run
+    while run:
+        try:
+            global state, desc
+            RPC.update(
+                large_image="osu-icon-28",
+                large_text="Osu!Player",
+                state=state,
+                details=desc,
+                start=start,
+                buttons=[{"label": "Download the app", "url": "https://github.com/OJddJO/osu-music-player"}]
+            )
+        except:
+            pass
+
+
+def importSongs():
     temp_song=export_osu_song.export()
 
     for s in temp_song:
@@ -32,6 +62,9 @@ def deletesong():
     
 def Play():
     song=songs_list.get(ACTIVE)
+    global desc, state
+    desc = song
+    state = "Listening"
     song=f'C:/Users/{user}/Music/osu!player/Osu/{song}'
     mixer.music.load(song)
     mixer.music.play()
@@ -39,21 +72,31 @@ def Play():
 
 def Pause():
     mixer.music.pause()
+    global  state
+    state = "Paused"
 
 
 def Stop():
     mixer.music.stop()
     songs_list.selection_clear(ACTIVE)
+    global state, desc
+    state = "Idle"
+    desc = "   "
 
 
 def Resume():
     mixer.music.unpause()
+    global state
+    state = "Listening"
 
 
 def Previous():
     previous_one=songs_list.curselection()
     previous_one=previous_one[0]-1
     temp2=songs_list.get(previous_one)
+    global state, desc
+    state = "Listening"
+    desc = temp2
     temp2=f'C:/Users/{user}/Music/osu!player/Osu/{temp2}'
     mixer.music.load(temp2)
     mixer.music.play()
@@ -63,8 +106,11 @@ def Previous():
 
 def Next():
     next_one=songs_list.curselection()
-    next_one=next_one[0]+1 
-    temp=songs_list.get(next_one)
+    next_one=next_one[0]+1
+    temp=songs_list.get(next_one) 
+    global state, desc
+    state = "Listening"
+    desc = temp
     temp=f'C:/Users/{user}/Music/osu!player/Osu/{temp}'
     mixer.music.load(temp)
     mixer.music.play()
@@ -123,4 +169,8 @@ add_song_menu.add_command(label="Delete song",command=deletesong)
 
 importSongs()
 
+threadA = threading.Thread(target= changeStatus)
+threadA.start()
+
 mainloop()
+run = False
