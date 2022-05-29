@@ -39,6 +39,7 @@ def export():
                     song.initTag()
                 song.tag.album = 'OSU!'
                 song.tag.track_num = count + 1
+                song.tag.save()
 
                 print(str(count)+"/"+str(len(titles)-1) + ':' + titles[count] + '        ' + songdir)
                 count += 1
