@@ -58,7 +58,7 @@ from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, EINVAL, \
      errorcode
 
 warnings.warn(
-    'The asyncore module is deprecated and will be removed in Python 3.12. '
+    'The asyncore module is deprecated. '
     'The recommended replacement is asyncio',
     DeprecationWarning,
     stacklevel=2)

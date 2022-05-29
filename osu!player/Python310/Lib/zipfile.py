@@ -721,9 +721,7 @@ class _SharedFile:
         self._lock = lock
         self._writing = writing
         self.seekable = file.seekable
-
-    def tell(self):
-        return self._pos
+        self.tell = file.tell
 
     def seek(self, offset, whence=0):
         with self._lock:
