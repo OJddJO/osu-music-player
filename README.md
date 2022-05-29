@@ -1,4 +1,4 @@
-# Osu!Player for Windows
+# Osu!Player for Windows (Not updated anymore)
 
 A music player that import automatically your osu! songs
 
