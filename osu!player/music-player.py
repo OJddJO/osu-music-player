@@ -121,6 +121,7 @@ def Next():
 
 root=Tk()
 root.title('osu!player')
+root.resizable(False, False)
 
 mixer.init()
 
