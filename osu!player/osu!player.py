@@ -202,39 +202,39 @@ playing_label=Label(root,textvariable=nowplaying,width=35,bg="gray15",fg="white"
 playing_label.grid(row=1, column=0, columnspan=5, pady=5)
 
 play_button=Button(root,text="▶",width =4,command=Play)
-play_button.config(font=('arial',20),bg="gray40",fg="white",bd=0,highlightthickness=1)
+play_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
 play_button.grid(row=2,column=0, padx=5)
 
 
 pause_button=Button(root,text="⏸️",width =4,command=Pause)
-pause_button.config(font=('arial',20),bg="gray40",fg="white",bd=0,highlightthickness=1)
+pause_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
 pause_button.grid(row=2,column=1, padx=5)
 
 
 stop_button=Button(root,text="⏹️",width =4,command=Stop)
-stop_button.config(font=('arial',20),bg="gray40",fg="white",bd=0,highlightthickness=1)
+stop_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
 stop_button.grid(row=2,column=2, padx=5)
 
 
 previous_button=Button(root,text="⏮️",width =4,command=Previous)
-previous_button.config(font=('arial',20),bg="gray40",fg="white",bd=0,highlightthickness=1)
+previous_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
 previous_button.grid(row=2,column=3, padx=5)
 
 
 next_button=Button(root,text="⏭️",width =4,command=Next)
-next_button.config(font=('arial',20),bg="gray40",fg="white",bd=0,highlightthickness=1)
+next_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
 next_button.grid(row=2,column=4, padx=5)
 
 looptxt = StringVar()
 looptxt.set("🔁:✅")
 loop_button=Button(root,textvariable=looptxt,width=5,command=Loop)
-loop_button.config(font=('arial',20),bg="gray40",fg="white",bd=0,highlightthickness=1)
+loop_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
 loop_button.grid(row=2,column=5, padx=5)
 
 shuffletxt = StringVar()
 shuffletxt.set("🔀:✅")
 shuffle_button=Button(root,textvariable=shuffletxt,width=5,command=Shuffle)
-shuffle_button.config(font=('arial',20),bg="gray40",fg="white",bd=0,highlightthickness=1)
+shuffle_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
 shuffle_button.grid(row=2,column=6)
 
 
