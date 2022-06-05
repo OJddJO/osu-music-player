@@ -6,6 +6,7 @@ from random import randint
 import os
 import export_osu_song
 import threading
+import keyboard
 
 user = os.getlogin()
 
@@ -41,6 +42,30 @@ def changeStatus():
             )
         except:
             pass
+
+#Keyboard input
+kcontrol = True
+def kinput():
+    if kcontrol:
+        if keyboard.is_pressed('space'):
+            global state
+            if state == 'Paused' or state == 'Idle':
+                Play()
+                while keyboard.is_pressed('space'):
+                    'a'
+            elif state == 'Listening':
+                Pause()
+                while keyboard.is_pressed('space'):
+                    'a'
+        elif keyboard.is_pressed('left'):
+            Previous()
+            while keyboard.is_pressed('left'):
+                'a'
+        elif keyboard.is_pressed('right'):
+            Next()
+            while keyboard.is_pressed('right'):
+                'a'
+
 
 def testPlaying():
     global channel, inactive_ticks, nosong, loop
@@ -175,7 +200,7 @@ def Shuffle():
     global shuffle, shuffletxt
     if shuffle == True:
         shuffle = False
-        shuffletxt.set("🔁:❎")
+        shuffletxt.set("🔀:❎")
     elif shuffle == False:
         shuffle = True
         shuffletxt.set("🔀:✅")
@@ -193,13 +218,13 @@ nosong = False
 mixer.init()
 channel = mixer.Channel(1)
 
-songs_list=Listbox(root,selectmode=SINGLE,bg="gray15",fg="white",bd=0,highlightthickness=0,font=('arial',15),height=12,width=55,selectbackground="gray",selectforeground="black")
-songs_list.grid(columnspan=7)
+songs_list=Listbox(root,selectmode=SINGLE,bg="gray15",fg="white",bd=0,highlightthickness=0,font=('arial',15),height=14,width=65,selectbackground="gray",selectforeground="black")
+songs_list.grid(columnspan=8)
 
 nowplaying=StringVar()
 nowplaying.set(f"{state}")
-playing_label=Label(root,textvariable=nowplaying,width=35,bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 15), relief='groove')
-playing_label.grid(row=1, column=0, columnspan=5, pady=5)
+playing_label=Label(root,textvariable=nowplaying,width=45,bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 15), relief='groove')
+playing_label.grid(row=1, column=0, columnspan=6, pady=5)
 
 play_button=Button(root,text="▶",width =4,command=Play)
 play_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
@@ -235,15 +260,30 @@ shuffletxt = StringVar()
 shuffletxt.set("🔀:✅")
 shuffle_button=Button(root,textvariable=shuffletxt,width=5,command=Shuffle)
 shuffle_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
-shuffle_button.grid(row=2,column=6)
+shuffle_button.grid(row=2,column=6, padx=5)
+
+kclabel = StringVar()
+kclabel.set("⌨:✅")
+def kcstate():
+    global kcontrol, kclabel
+    if kcontrol == True:
+        kcontrol = False
+        kclabel.set("⌨:❎")
+    elif kcontrol == False:
+        kcontrol = True
+        kclabel.set("⌨:✅")
+
+kc = Button(root,textvariable=kclabel,width=5,command=kcstate)
+kc.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
+kc.grid(row=2,column=7)
 
 
 voltxt = Label(root, bg="gray15", fg="white", text="Volume:")
 voltxt.config(font=('arial',12),bd=0,highlightthickness=0)
-voltxt.grid(row=1, column=5, pady=5)
+voltxt.grid(row=1, column=6, pady=5)
 
 volume = Scale(root, from_=0, to=100, orient=HORIZONTAL, variable=IntVar)
-volume.grid(row=1, column=6, pady=5)
+volume.grid(row=1, column=7, pady=5)
 volume.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
 volume.set(100)
 
@@ -279,9 +319,12 @@ root.iconbitmap(fr"C:\Users\{user}\Music\osu!player\osu-icon-28.ico")
 
 threadA = threading.Thread(target= changeStatus)
 threadA.start()
+threadB = threading.Thread(target= kinput)
+threadB.start()
 
 
 while run:
     root.update()
     testPlaying()
     changeVol()
+    kinput()
