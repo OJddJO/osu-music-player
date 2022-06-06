@@ -47,23 +47,23 @@ def changeStatus():
 kcontrol = True
 def kinput():
     if kcontrol:
-        if keyboard.is_pressed('space'):
+        if keyboard.is_pressed('ctrl+alt+space'):
             global state
             if state == 'Paused' or state == 'Idle':
                 Play()
-                while keyboard.is_pressed('space'):
+                while keyboard.is_pressed('ctrl+alt+space'):
                     'a'
             elif state == 'Listening':
                 Pause()
-                while keyboard.is_pressed('space'):
+                while keyboard.is_pressed('ctrl+alt+space'):
                     'a'
-        elif keyboard.is_pressed('left'):
+        elif keyboard.is_pressed('ctrl+alt+left'):
             Previous()
-            while keyboard.is_pressed('left'):
+            while keyboard.is_pressed('ctrl+alt+left'):
                 'a'
-        elif keyboard.is_pressed('right'):
+        elif keyboard.is_pressed('ctrl+alt+right'):
             Next()
-            while keyboard.is_pressed('right'):
+            while keyboard.is_pressed('ctrl+alt+right'):
                 'a'
 
 
