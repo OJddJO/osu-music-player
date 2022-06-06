@@ -21,11 +21,14 @@ def export():
     files2 = []
     for dirname in files:
         if dirname not in test:
-            test.append(dirname)
-            i = dirname.index(r' - ')
-            title = dirname[i+3:]
-            titles.append(title)
-            files2.append(dirname)
+            try:
+                test.append(dirname)
+                i = dirname.index(r' - ')
+                title = dirname[i+3:]
+                titles.append(title)
+                files2.append(dirname)
+            except:
+                pass
 
 
     open(f'C:\\Users\\{user}\\Music\\osu!player\\import.data', 'w').write(str(test))
