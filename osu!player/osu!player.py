@@ -90,6 +90,17 @@ def importSongs():
         slist.append(s)
 
 
+def reimportall():
+    global slist, songs_list
+    root.title("osu!player - Re-importing songs")
+    path = fr'C:\Users\{user}\Music\osu!player\import.data'
+    slist = []
+    songs_list.delete(0, END)
+    os.remove(path)
+    importSongs()
+    root.title("osu!player")
+
+
 def deletesong():
     curr_song=songs_list.curselection()
     songs_list.delete(curr_song[0])
@@ -303,6 +314,7 @@ root.config(menu=my_menu)
 add_song_menu=Menu(my_menu)
 my_menu.add_cascade(label="Menu",menu=add_song_menu)
 add_song_menu.add_command(label="Import Songs From Osu!",command=importSongs)
+add_song_menu.add_command(label="Re-import all songs", command=reimportall)
 add_song_menu.add_command(label="Delete song",command=deletesong)
 
 
