@@ -41,8 +41,21 @@ def export():
     if count!=-1:
         for songdir in files2:
             path = src + '\\' + songdir
+            fname = ""
             for f in os.listdir(path):
-                if f.endswith("3") or f.find("audio") == 0:
+                if fname == "":
+                    if f.endswith(".osu"):
+                        tmppath = path + '\\' + f
+                        tmp = open(tmppath, encoding="utf-8").read()
+                        tmp2 = str(fr"{tmp}")
+                        i = tmp2.find("AudioFilename:")
+                        i2 = tmp2.find("AudioLeadIn:")
+                        fname = tmp2[i+15:i2-1]
+                    else:
+                        pass
+
+            for f in os.listdir(path):
+                if f.find(fname) == 0:
                     tmpsrc = path+'\\'+f
                     tmpdst = dst+'\\'+titles[count]+'.mp3'
 
@@ -59,18 +72,9 @@ def export():
                     song.tag.save()
 
                     print(str(count)+"/"+str(len(titles)-1) + ':' + titles[count] + '        ' + songdir)
-                    count += 1
+                    count += 1   
+
 
     files = os.listdir(dst)
     test = []
-
-    for song in files:
-        if song.endswith("mp3"):
-            test.append(song)
-        else:
-            path = dst + "\\" + song
-            os.remove(path)
-    else:
-        path = dst + "\\" + song
-        os.remove(path)
     return files
