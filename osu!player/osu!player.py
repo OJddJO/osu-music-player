@@ -65,6 +65,14 @@ def kinput():
             Next()
             while keyboard.is_pressed('ctrl+alt+right'):
                 'a'
+        elif keyboard.is_pressed('ctrl+alt+up'):
+            volume.set(volume.get()+5)
+            while keyboard.is_pressed('ctrl+alt+up'):
+                'a'
+        elif keyboard.is_pressed('ctrl+alt+down'):
+            volume.set(volume.get()-5)
+            while keyboard.is_pressed('ctrl+alt+down'):
+                'a'
 
 
 def testPlaying():
@@ -222,7 +230,6 @@ root.title('osu!player')
 root.resizable(False, False)
 root.config(bg="gray15")
 
-
 inactive_ticks = 0
 nosong = False
 
@@ -331,8 +338,6 @@ root.iconbitmap(fr"C:\Users\{user}\Music\osu!player\osu-icon-28.ico")
 
 threadA = threading.Thread(target= changeStatus)
 threadA.start()
-threadB = threading.Thread(target= kinput)
-threadB.start()
 
 
 while run:
