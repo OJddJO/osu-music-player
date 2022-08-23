@@ -69,7 +69,10 @@ def export():
                     if not song.tag:
                         song.initTag()
                     song.tag.album = 'OSU!'
-                    song.tag.save()
+                    try:
+                        song.tag.save()
+                    except:
+                        "a"
 
                     print(str(count)+"/"+str(len(titles)-1) + ':' + titles[count] + '        ' + songdir)
                     count += 1   
