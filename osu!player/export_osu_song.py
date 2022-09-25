@@ -2,11 +2,13 @@ import os
 import eyed3
 import shutil
 from pydub import AudioSegment
+from thefuzz import fuzz
 
 user = os.getlogin()
 
 def export():
     titles = []
+    blacklist = ["<", ">", ":", "\"", "/", "\\", "|", "*", "?"]
 
     src = f"C:\\Users\\{user}\\AppData\\Local\\osu!\\Songs"
     dst = f"C:\\Users\\{user}\\Music\\osu!player\\Osu"
@@ -23,8 +25,25 @@ def export():
         if dirname not in test:
             try:
                 test.append(dirname)
-                i = dirname.index(r' - ')
-                title = dirname[i+3:]
+                path = src + '\\' + dirname
+                title = ""
+                for f in os.listdir(path):
+                    if title == "":
+                        if f.endswith(".osu"):
+                            tmppath = path + '\\' + f
+                            tmp = open(tmppath, encoding="utf-8").read()
+                            i = tmp.find("Title:")
+                            i2 = tmp.find("TitleUnicode:")
+                            if i2 == -1:
+                                i2 = tmp.find("Artist:")
+                            title = tmp[i+6:i2-1]
+                        else:
+                            pass
+                for blacklisted in blacklist:
+                    title = title.replace(blacklisted, "")
+                for t in titles:
+                    if fuzz.partial_ratio(t, title) >= 90:
+                        title = t
                 titles.append(title)
                 files2.append(dirname)
             except:
@@ -69,6 +88,10 @@ def export():
                     if not song.tag:
                         song.initTag()
                     song.tag.album = 'OSU!'
+                    song.tag.date = ''
+                    song.tag.artist = ''
+                    song.tag.title = titles[count]
+                    song.tag.track_num = count+1
                     try:
                         song.tag.save()
                     except:

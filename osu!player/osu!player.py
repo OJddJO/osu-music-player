@@ -105,6 +105,10 @@ def reimportall():
     slist = []
     songs_list.delete(0, END)
     os.remove(path)
+    path2 = fr'C:\Users\{user}\Music\osu!player\Osu'
+    tmp = os.listdir(path2)
+    for element in tmp:
+        os.remove(path2+"\\"+element)
     importSongs()
     root.title("osu!player")
 
@@ -241,7 +245,7 @@ songs_list.grid(columnspan=8)
 
 nowplaying=StringVar()
 nowplaying.set(f"{state}")
-playing_label=Label(root,textvariable=nowplaying,width=45,bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 15), relief='groove')
+playing_label=Label(root,textvariable=nowplaying,width=55,bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 13), relief='groove')
 playing_label.grid(row=1, column=0, columnspan=6, pady=5)
 
 play_button=Button(root,text="▶",width =4,command=Play)
