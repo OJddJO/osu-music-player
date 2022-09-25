@@ -91,7 +91,7 @@ def export():
                     song.tag.date = ''
                     song.tag.artist = ''
                     song.tag.title = titles[count]
-                    song.tag.track_num = count+1
+                    song.tag.track_num = 0
                     try:
                         song.tag.save()
                     except:
