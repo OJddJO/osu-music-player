@@ -87,7 +87,7 @@ def export():
                     song = eyed3.load(tmpdst)
                     if not song.tag:
                         song.initTag()
-                    song.tag.album = 'OSU!'
+                    song.tag.album = ''
                     song.tag.date = ''
                     song.tag.artist = ''
                     song.tag.title = titles[count]
