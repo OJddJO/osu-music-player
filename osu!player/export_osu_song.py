@@ -10,13 +10,14 @@ def export():
     titles = []
     blacklist = ["<", ">", ":", "\"", "/", "\\", "|", "*", "?"]
 
-    src = f"C:\\Users\\{user}\\AppData\\Local\\osu!\\Songs"
-    dst = f"C:\\Users\\{user}\\Music\\osu!player\\Osu"
+    src = open("path.data").read()
+    src = src.replace("{user}", user)
+    dst = "Osu\\"
 
     files = os.listdir(src)
 
     try:
-        test = eval(open(f'C:\\Users\\{user}\\Music\\osu!player\\import.data').read())
+        test = eval(open('import.data').read())
     except:
         test = []
 
@@ -50,7 +51,7 @@ def export():
                 pass
 
 
-    open(f'C:\\Users\\{user}\\Music\\osu!player\\import.data', 'w').write(str(test))
+    open('import.data', 'w').write(str(test))
 
     if titles == []:
         count = -1

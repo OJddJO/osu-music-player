@@ -1,3 +1,4 @@
+from tkinter import filedialog
 from pygame import mixer
 from tkinter import *
 from pypresence import Presence
@@ -26,6 +27,15 @@ try:
 except:
     pass
 run = True
+
+
+def getPath():
+    path = filedialog.askdirectory(title="Select your osu! songs directory")
+    open("path.data", "w").write(path)
+
+try:
+    os.listdir(f"C:\Users\{user}\AppData\Local\osu!\Songs")
+
 
 def changeStatus():
     global run
