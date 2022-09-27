@@ -31,10 +31,14 @@ run = True
 
 def getPath():
     path = filedialog.askdirectory(title="Select your osu! songs directory")
-    open("path.data", "w").write(path)
+    if path != "":
+        open("path.data", "w").write(path)
 
 try:
-    os.listdir(f"C:\Users\{user}\AppData\Local\osu!\Songs")
+    os.listdir(fr"C:\Users\{user}\AppData\Local\osu!\Songs")
+    path = fr"C:\Users\{user}\AppData\Local\osu!\Songs"
+except:
+    getPath()
 
 
 def changeStatus():
@@ -337,6 +341,7 @@ my_menu.add_cascade(label="Menu",menu=add_song_menu)
 add_song_menu.add_command(label="Import Songs From Osu!",command=importSongs)
 add_song_menu.add_command(label="Re-import all songs", command=reimportall)
 add_song_menu.add_command(label="Delete song",command=deletesong)
+add_song_menu.add_command(label="Select osu! songs directory", command=getPath)
 
 
 def shutdown():
