@@ -107,7 +107,7 @@ def importSongs():
     temp_song=export_osu_song.export()
 
     for s in temp_song:
-        s=s.replace(f"C:/Users/{user}/Music/osu!player/Osu/","")
+        s=s.replace("Osu/","")
         songs_list.insert(END,s)
         slist.append(s)
 
@@ -115,11 +115,11 @@ def importSongs():
 def reimportall():
     global slist, songs_list
     root.title("osu!player - Re-importing songs")
-    path = fr'C:\Users\{user}\Music\osu!player\import.data'
+    path = 'import.data'
     slist = []
     songs_list.delete(0, END)
     os.remove(path)
-    path2 = fr'C:\Users\{user}\Music\osu!player\Osu'
+    path2 = 'Osu\\'
     tmp = os.listdir(path2)
     for element in tmp:
         os.remove(path2+"\\"+element)
@@ -144,7 +144,7 @@ def Play():
         songs_list.selection_set(slist.index(song))
         desc = song
         state = "Listening"
-        song=f'C:/Users/{user}/Music/osu!player/Osu/{song}'
+        song=f'Osu\\{song}'
         song = mixer.Sound(song)
         channel.play(song)
     nowplaying.set(f"{state}: {desc}")
@@ -183,7 +183,7 @@ def Previous():
     global state, desc
     state = "Listening"
     desc = temp2
-    temp2=f'C:/Users/{user}/Music/osu!player/Osu/{temp2}'
+    temp2=f'Osu\\{temp2}'
     song = mixer.Sound(temp2)
     channel.play(song)
     songs_list.selection_clear(0,END)
@@ -209,7 +209,7 @@ def Next():
     global state, desc
     state = "Listening"
     desc = temp
-    temp=f'C:/Users/{user}/Music/osu!player/Osu/{temp}'
+    temp=f'Osu\\{temp}'
     song = mixer.Sound(temp)
     channel.play(song)
     songs_list.selection_clear(0,END)
@@ -353,7 +353,7 @@ root.protocol("WM_DELETE_WINDOW", shutdown)
 
 importSongs()
 
-root.iconbitmap(fr"C:\Users\{user}\Music\osu!player\osu-icon-28.ico")
+root.iconbitmap("osu-icon-28.ico")
 
 threadA = threading.Thread(target= changeStatus)
 threadA.start()
