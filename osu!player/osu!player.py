@@ -35,8 +35,8 @@ def getPath():
         open("path.data", "w").write(path)
 
 try:
-    os.listdir(fr"C:\Users\{user}\AppData\Local\osu!\Songs")
-    path = fr"C:\Users\{user}\AppData\Local\osu!\Songs"
+    path = open("path.data").read().replace("/", "\\")
+    os.listdir(path)
 except:
     getPath()
 
