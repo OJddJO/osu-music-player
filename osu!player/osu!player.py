@@ -340,7 +340,36 @@ my_menu.add_cascade(label="Menu",menu=add_song_menu)
 add_song_menu.add_command(label="Import Songs From Osu!",command=importSongs)
 add_song_menu.add_command(label="Re-import all songs", command=reimportall)
 add_song_menu.add_command(label="Delete song",command=deletesong)
+add_song_menu.add_separator()
 add_song_menu.add_command(label="Select osu! songs directory", command=getPath)
+searchBarToggle = IntVar()
+searchBarToggle.set(0)
+my_menu.add_checkbutton(label="Search Bar", variable=searchBarToggle)
+
+searchTxt = Label(root, bg="gray15", fg="white", text="Search:")
+searchTxt.config(font=('arial',12),bd=0,highlightthickness=0)
+
+def search():
+    songs_list.remove(0, END)
+    tmp = searchValue.get()
+    for element in slist:
+        if tmp in element:            
+            songs_list.insert(END, element)
+
+searchValue = StringVar()
+searchValue.set("")
+searchBar = Entry(root, textvariable=searchValue,bg="gray15", fg="white")
+searchBar.bind("<Return>", search)
+searchBar.config(bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 13), relief='groove')
+
+def searchToggle():
+    if searchBarToggle.get() == 0:
+        searchValue.set("")
+        searchBar.grid_remove()
+        searchTxt.grid_remove()
+    elif searchBarToggle.get() == 1:
+        searchTxt.grid(row=3, column=0)
+        searchBar.grid(row=3, column=1, columnspan=7)
 
 
 def shutdown():
@@ -363,3 +392,4 @@ while run:
     testPlaying()
     changeVol()
     kinput()
+    searchToggle()
