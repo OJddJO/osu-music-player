@@ -334,6 +334,16 @@ def changeVol():
         channel.set_volume(regvol/100)
 
 
+def searchbar():
+    searchWin = Toplevel(root)
+    searchWin.title("Search Window")
+    searchWin.resizable(False, False)
+
+    searchVar = StringVar()
+    searchBar = Entry(searchWin, textvariable=searchVar, bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 13), relief='groove')
+    searchBar.grid(row=0, column=0, padx=5)
+
+
 my_menu=Menu(root)
 root.config(menu=my_menu)
 add_song_menu=Menu(my_menu)
@@ -342,6 +352,7 @@ add_song_menu.add_command(label="Import Songs From Osu!",command=importSongs)
 add_song_menu.add_command(label="Re-import all songs", command=reimportall)
 add_song_menu.add_command(label="Delete song",command=deletesong)
 add_song_menu.add_command(label="Select osu! songs directory", command=getPath)
+my_menu.add_command(label="Search", command=searchbar)
 
 
 def shutdown():
