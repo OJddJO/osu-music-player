@@ -349,6 +349,8 @@ def searchbar():
     searchButton = Button(searchWin, text="Search", command=search)
     searchButton.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
 
+    searchWin.mainloop()
+
 
 my_menu=Menu(root)
 root.config(menu=my_menu)
