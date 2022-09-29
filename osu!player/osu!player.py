@@ -5,6 +5,7 @@ from pypresence import Presence
 from time import time
 from random import randint
 import os
+import os.path
 import export_osu_song
 import threading
 import keyboard
@@ -36,15 +37,15 @@ def getPath():
 
 try:
     path = open("path.data").read().replace("/", "\\")
-    os.listdir(path)
+    os.path.isdir(path)
 except:
     getPath()
 
 
 def changeStatus():
     global run
-    while run:
-        try:
+    try:
+        while run:
             global state, desc
             RPC.update(
                 large_image="osu-icon-28",
@@ -54,8 +55,8 @@ def changeStatus():
                 start=start,
                 buttons=[{"label": "Download the app", "url": "https://github.com/OJddJO/osu-music-player.exe"}]
             )
-        except:
-            pass
+    except:
+        pass
 
 #Keyboard input
 kcontrol = True
@@ -342,25 +343,7 @@ add_song_menu.add_command(label="Re-import all songs", command=reimportall)
 add_song_menu.add_command(label="Delete song",command=deletesong)
 add_song_menu.add_separator()
 add_song_menu.add_command(label="Select osu! songs directory", command=getPath)
-searchBarToggle = IntVar()
-searchBarToggle.set(0)
-my_menu.add_checkbutton(label="Search Bar", variable=searchBarToggle)
 
-searchTxt = Label(root, bg="gray15", fg="white", text="Search:")
-searchTxt.config(font=('arial',12),bd=0,highlightthickness=0)
-
-def search():
-    songs_list.remove(0, END)
-    tmp = searchValue.get()
-    for element in slist:
-        if tmp in element:            
-            songs_list.insert(END, element)
-
-searchValue = StringVar()
-searchValue.set("")
-searchBar = Entry(root, textvariable=searchValue,bg="gray15", fg="white")
-searchBar.bind("<Return>", search)
-searchBar.config(bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 13), relief='groove')
 
 def searchToggle():
     if searchBarToggle.get() == 0:
@@ -369,7 +352,27 @@ def searchToggle():
         searchTxt.grid_remove()
     elif searchBarToggle.get() == 1:
         searchTxt.grid(row=3, column=0)
-        searchBar.grid(row=3, column=1, columnspan=7)
+        searchBar.grid(row=3, column=1, columnspan=7, pady=5)
+
+searchBarToggle = IntVar()
+searchBarToggle.set(0)
+my_menu.add_checkbutton(label="Search Bar", variable=searchBarToggle, command=searchToggle)
+
+searchTxt = Label(root, bg="gray15", fg="white", text="Search:")
+searchTxt.config(font=('arial',12),bd=0,highlightthickness=0)
+
+def search(searchValue):
+    songs_list.delete(0, END)
+    tmp = searchValue.get()
+    for element in slist:
+        if tmp in element:            
+            songs_list.insert(END, element)
+
+searchValue = StringVar()
+searchValue.set("")
+searchValue.trace_add("write", lambda name, index, mode, sv=searchValue : search(sv))
+searchBar = Entry(root, textvariable=searchValue,width=60,bg="gray15", fg="white", insertbackground="white")
+searchBar.config(bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 13), relief='groove')
 
 
 def shutdown():
@@ -392,4 +395,3 @@ while run:
     testPlaying()
     changeVol()
     kinput()
-    searchToggle()
