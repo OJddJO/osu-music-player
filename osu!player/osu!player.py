@@ -345,8 +345,11 @@ def searchbar():
                 valid.insert(END, element)
 
     def output():
-        song = valid.get(valid.curselection())
-        songs_list.activate(slist.find(song))
+        try:
+            song = valid.get(valid.curselection())
+            songs_list.activate(slist.find(song))
+        except:
+            pass
     
     searchWin = Toplevel(root)
     searchWin.title("Search Window")
@@ -363,9 +366,9 @@ def searchbar():
     searchButton.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
 
     def shutdown():
-        global run
-        run = False
-        root.quit()
+        global running
+        running = False
+        searchWin.quit()
     searchWin.protocol("WM_DELETE_WINDOW", shutdown)
 
     running = True
