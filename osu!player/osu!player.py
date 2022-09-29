@@ -334,6 +334,9 @@ def changeVol():
         channel.set_volume(regvol/100)
 
 
+def search():
+    pass
+
 def searchbar():
     searchWin = Toplevel(root)
     searchWin.title("Search Window")
@@ -342,6 +345,9 @@ def searchbar():
     searchVar = StringVar()
     searchBar = Entry(searchWin, textvariable=searchVar, bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 13), relief='groove')
     searchBar.grid(row=0, column=0, padx=5)
+
+    searchButton = Button(searchWin, text="Search", command=search)
+    searchButton.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
 
 
 my_menu=Menu(root)
