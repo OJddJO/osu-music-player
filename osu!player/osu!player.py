@@ -334,22 +334,45 @@ def changeVol():
         channel.set_volume(regvol/100)
 
 
-def search():
-    pass
-
 def searchbar():
+
+    def search():
+        valid.delete(0, END)
+        tmpList = songs_list.get()
+        s = searchVar.get()
+        for element in tmpList:
+            if element.find(s)!=-1:
+                valid.insert(END, element)
+
+    def output():
+        song = valid.get(valid.curselection())
+        songs_list.activate(slist.find(song))
+    
     searchWin = Toplevel(root)
     searchWin.title("Search Window")
     searchWin.resizable(False, False)
 
+    valid = Listbox(searchWin,selectmode=SINGLE,bg="gray15",fg="white",bd=0,highlightthickness=0,font=('arial',15),height=14,width=40,selectbackground="gray",selectforeground="black")
+    valid.grid(row=1, column=0, columnspan=2)
+
     searchVar = StringVar()
-    searchBar = Entry(searchWin, textvariable=searchVar, bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 13), relief='groove')
+    searchBar = Entry(searchWin, width=40, textvariable=searchVar, bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 13), relief='groove')
     searchBar.grid(row=0, column=0, padx=5)
 
-    searchButton = Button(searchWin, text="Search", command=search)
+    searchButton = Button(searchWin, text="Search", width=10, command=search)
     searchButton.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
 
-    searchWin.mainloop()
+    def shutdown():
+        global run
+        run = False
+        root.quit()
+    searchWin.protocol("WM_DELETE_WINDOW", shutdown)
+
+    running = True
+    while running:
+        searchWin.update()
+        output()
+        
 
 
 my_menu=Menu(root)
