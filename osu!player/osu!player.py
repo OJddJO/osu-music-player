@@ -1,4 +1,5 @@
 from tkinter import filedialog
+from tokenize import String
 from pygame import mixer
 from tkinter import *
 from pypresence import Presence
@@ -9,6 +10,8 @@ import os.path
 import export_osu_song
 import threading
 import keyboard
+import requests
+import webbrowser
 
 user = os.getlogin()
 
@@ -37,7 +40,8 @@ def getPath():
 
 try:
     path = open("path.data").read().replace("/", "\\")
-    os.path.isdir(path)
+    if not os.path.exists(path):
+        getPath()
 except:
     getPath()
 
@@ -337,7 +341,7 @@ def changeVol():
 my_menu=Menu(root)
 root.config(menu=my_menu)
 add_song_menu=Menu(my_menu)
-my_menu.add_cascade(label="Menu",menu=add_song_menu)
+my_menu.add_cascade(label="File",menu=add_song_menu)
 add_song_menu.add_command(label="Import Songs From Osu!",command=importSongs)
 add_song_menu.add_command(label="Re-import all songs", command=reimportall)
 add_song_menu.add_command(label="Delete song",command=deletesong)
@@ -354,9 +358,11 @@ def searchToggle():
         searchTxt.grid(row=3, column=0)
         searchBar.grid(row=3, column=1, columnspan=7, pady=5)
 
+other_menu = Menu(my_menu)
+my_menu.add_cascade(label="Other", menu=other_menu)
 searchBarToggle = IntVar()
 searchBarToggle.set(0)
-my_menu.add_checkbutton(label="Search Bar", variable=searchBarToggle, command=searchToggle)
+other_menu.add_checkbutton(label="Search Bar", variable=searchBarToggle, command=searchToggle)
 
 searchTxt = Label(root, bg="gray15", fg="white", text="Search:")
 searchTxt.config(font=('arial',12),bd=0,highlightthickness=0)
@@ -375,6 +381,48 @@ searchBar = Entry(root, textvariable=searchValue,width=60,bg="gray15", fg="white
 searchBar.config(bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 13), relief='groove')
 
 
+
+def versionWin(update):
+
+    def updateApp():
+        webbrowser.open("https://github.com/OJddJO/osu-music-player.exe/releases/latest/")
+        vWin.destroy()
+
+    vWin = Toplevel(root)
+    vWin.geometry("200x40")
+    vWin.iconbitmap("osu-icon-28.ico")
+    vWin.config(bg="gray15")
+    vWin.title("Check for update")
+    vWin.resizable(False, False)
+
+    txt = StringVar()
+    txtUpdate = Label(vWin, textvariable=txt)
+    txtUpdate.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+    txtUpdate.pack()
+
+    if update:
+        txt.set("Update Available !")
+        updateButton = Button(vWin, text="Update", command=updateApp)
+        updateButton.config(bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
+        updateButton.pack()
+    else:
+        txt.set("Your version is the latest !")
+    
+    vWin.mainloop()
+
+
+update = False
+def testVersion():
+    global update
+    version = open("version.lock").read()
+    latestVersion = requests.get("https://api.github.com/repos/OJddJO/osu-music-player.exe/releases/latest").json()["tag_name"]
+    if version != latestVersion:
+        update = True
+        versionWin(update)
+
+other_menu.add_command(label="Check for update", command=testVersion)
+
+
 def shutdown():
     global run
     run = False
@@ -383,6 +431,7 @@ root.protocol("WM_DELETE_WINDOW", shutdown)
 
 
 importSongs()
+testVersion()
 
 root.iconbitmap("osu-icon-28.ico")
 
