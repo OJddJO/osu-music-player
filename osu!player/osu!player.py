@@ -16,11 +16,6 @@ user = os.getlogin()
 
 slist = []
 
-state = "Idle"
-desc = "    "
-
-channel = None
-
 #RPC
 start = time()
 clientid = '980519752025931836'
@@ -31,19 +26,16 @@ except:
     pass
 
 
+#function
+#ask the user for the path of osu! directory
 def getPath():
     path = filedialog.askdirectory(title="Select your osu! songs directory")
     if path != "":
         open("path.data", "w").write(path)
 
-try:
-    path = open("path.data").read().replace("/", "\\")
-    if not os.path.exists(path):
-        getPath()
-except:
-    getPath()
-
-
+#update Discord RPC
+state = "Idle"
+desc = "    "
 def changeStatus():
     global run
     try:
@@ -59,6 +51,7 @@ def changeStatus():
             )
     except:
         pass
+
 
 #Keyboard input
 kcontrol = True
@@ -91,36 +84,38 @@ def kinput():
             while keyboard.is_pressed('ctrl+alt+down'):
                 'a'
 
-
+#check if a song is playing if not Next()
+inactiveTicks = 0
+nosong = False
 def testPlaying():
-    global channel, inactive_ticks, nosong, loop
+    global channel, inactiveTicks, nosong, loop
     if not channel.get_busy():
         if loop:
             if state!='Paused' and state!='Idle':
-                inactive_ticks += 1 
-                if inactive_ticks == 1000:
+                inactiveTicks += 1 
+                if inactiveTicks == 1000:
                     Next()
         else:
             Stop()
     else:
-        inactive_ticks = 0
+        inactiveTicks = 0
 
-
+#import all songs, previously imported songs will not be re-checked -> import.data
 def importSongs():
     temp_song=export_osu_song.export()
 
     for s in temp_song:
         s=s.replace("Osu/","")
-        songs_list.insert(END,s)
+        songsList.insert(END,s)
         slist.append(s)
 
-
+#delete and reimport all songs from osu!
 def reimportall():
-    global slist, songs_list
+    global slist, songsList
     root.title("osu!player - Re-importing songs")
     path = 'import.data'
     slist = []
-    songs_list.delete(0, END)
+    songsList.delete(0, END)
     os.remove(path)
     path2 = 'Osu\\'
     tmp = os.listdir(path2)
@@ -129,12 +124,12 @@ def reimportall():
     importSongs()
     root.title("osu!player")
 
-
+#delete current song from listbox
 def deletesong():
-    curr_song=songs_list.curselection()
-    songs_list.delete(curr_song[0])
+    curr_song=songsList.curselection()
+    songsList.delete(curr_song[0])
 
-
+#play the selected song or unpause the current song
 def Play():
     global desc, state
     if state == "Paused":
@@ -143,8 +138,8 @@ def Play():
     else:
         channel.pause()
         channel.stop()
-        song=songs_list.get(ACTIVE)
-        songs_list.selection_set(slist.index(song))
+        song=songsList.get(ACTIVE)
+        songsList.selection_set(slist.index(song))
         desc = song
         state = "Listening"
         song=f'Osu\\{song}'
@@ -152,76 +147,80 @@ def Play():
         channel.play(song)
     nowplaying.set(f"{state}: {desc}")
 
-
+#pause the song
 def Pause():
     channel.pause()
     global  state
     state = "Paused"
     nowplaying.set(f"{state}: {desc}")
 
-
+#stop the music channel and reset it
 def Stop():
     channel.pause()
     channel.stop()
-    songs_list.selection_clear(ACTIVE)
+    songsList.selection_clear(ACTIVE)
     global state, desc
     state = "Idle"
     desc = "    "
     nowplaying.set(f"{state}")
 
-
+#play previous song
 def Previous():
     channel.pause()
     channel.stop()
     global prevx, slist, shuffle
     if shuffle:
         temp2 = slist[prevx[-1]]
-        previous_one = songs_list.index(prevx[-1])
+        previous_one = songsList.index(prevx[-1])
         if len(prevx)!=1:
             prevx.pop()
     else:
-        previous_one=songs_list.curselection()
+        previous_one=songsList.curselection()
         previous_one=previous_one[0]-1
-        temp2=songs_list.get(previous_one)
+        if previous_one < 0:
+            previous_one = len(slist)-1
+        temp2=songsList.get(previous_one)
     global state, desc
     state = "Listening"
     desc = temp2
     temp2=f'Osu\\{temp2}'
     song = mixer.Sound(temp2)
     channel.play(song)
-    songs_list.selection_clear(0,END)
-    songs_list.see(previous_one)
-    songs_list.activate(previous_one)
-    songs_list.selection_set(previous_one)
+    songsList.selection_clear(0,END)
+    songsList.see(previous_one)
+    songsList.activate(previous_one)
+    songsList.selection_set(previous_one)
     nowplaying.set(f"{state}: {desc}")
 
-
+#play next song
 def Next():
     channel.pause()
     channel.stop()
     global x, shuffle, prevx, slist
     if shuffle:
-        prevx.append(slist.index(songs_list.get(ACTIVE)))
+        prevx.append(slist.index(songsList.get(ACTIVE)))
         x = randint(0, len(slist)-1)
         temp = slist[x]
-        next_one = songs_list.index(x)
+        next_one = songsList.index(x)
     else:
-        next_one=songs_list.curselection()
+        next_one=songsList.curselection()
         next_one=next_one[0]+1
-        temp=songs_list.get(next_one) 
+        if next_one > len(slist)-1:
+            next_one=0
+        temp=songsList.get(next_one) 
     global state, desc
     state = "Listening"
     desc = temp
     temp=f'Osu\\{temp}'
     song = mixer.Sound(temp)
     channel.play(song)
-    songs_list.selection_clear(0,END)
-    songs_list.see(next_one)
-    songs_list.activate(next_one)
-    songs_list.selection_set(next_one)
+    songsList.selection_clear(0,END)
+    songsList.see(next_one)
+    songsList.activate(next_one)
+    songsList.selection_set(next_one)
     nowplaying.set(f"{state}: {desc}")
 
-
+#toggle loop
 loop = True
 def Loop():
     global loop, looptxt
@@ -232,7 +231,7 @@ def Loop():
         loop = True
         looptxt.set("🔁:✅")
 
-
+#toggle shuffle
 x=0
 prevx = []
 shuffle = True
@@ -245,64 +244,7 @@ def Shuffle():
         shuffle = True
         shuffletxt.set("🔀:✅")
 
-
-root=Tk()
-root.title('osu!player')
-root.resizable(False, False)
-root.config(bg="gray15")
-
-inactive_ticks = 0
-nosong = False
-
-mixer.init()
-channel = mixer.Channel(1)
-
-songs_list=Listbox(root,selectmode=SINGLE,bg="gray15",fg="white",bd=0,highlightthickness=0,font=('arial',15),height=14,width=65,selectbackground="gray",selectforeground="black")
-songs_list.grid(columnspan=8)
-
-nowplaying=StringVar()
-nowplaying.set(f"{state}")
-playing_label=Label(root,textvariable=nowplaying,width=55,bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 13), relief='groove')
-playing_label.grid(row=1, column=0, columnspan=6, pady=5)
-
-play_button=Button(root,text="▶",width =4,command=Play)
-play_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
-play_button.grid(row=2,column=0, padx=5)
-
-
-pause_button=Button(root,text="⏸️",width =4,command=Pause)
-pause_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
-pause_button.grid(row=2,column=1, padx=5)
-
-
-stop_button=Button(root,text="⏹️",width =4,command=Stop)
-stop_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
-stop_button.grid(row=2,column=2, padx=5)
-
-
-previous_button=Button(root,text="⏮️",width =4,command=Previous)
-previous_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
-previous_button.grid(row=2,column=3, padx=5)
-
-
-next_button=Button(root,text="⏭️",width =4,command=Next)
-next_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
-next_button.grid(row=2,column=4, padx=5)
-
-looptxt = StringVar()
-looptxt.set("🔁:✅")
-loop_button=Button(root,textvariable=looptxt,width=5,command=Loop)
-loop_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
-loop_button.grid(row=2,column=5, padx=5)
-
-shuffletxt = StringVar()
-shuffletxt.set("🔀:✅")
-shuffle_button=Button(root,textvariable=shuffletxt,width=5,command=Shuffle)
-shuffle_button.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
-shuffle_button.grid(row=2,column=6, padx=5)
-
-kclabel = StringVar()
-kclabel.set("⌨:✅")
+#toggle keyboard control
 def kcstate():
     global kcontrol, kclabel
     if kcontrol == True:
@@ -312,22 +254,8 @@ def kcstate():
         kcontrol = True
         kclabel.set("⌨:✅")
 
-kc = Button(root,textvariable=kclabel,width=5,command=kcstate)
-kc.config(font=('arial',20),bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
-kc.grid(row=2,column=7)
-
-
-voltxt = Label(root, bg="gray15", fg="white", text="Volume:")
-voltxt.config(font=('arial',12),bd=0,highlightthickness=0)
-voltxt.grid(row=1, column=6, pady=5)
-
-volume = Scale(root, from_=0, to=100, orient=HORIZONTAL, variable=IntVar)
-volume.grid(row=1, column=7, pady=5)
-volume.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
-volume.set(100)
-
+#change the volume
 regvol = 100
-
 def changeVol():
     global channel, regvol, volume
     regvol = int(volume.get())
@@ -336,17 +264,7 @@ def changeVol():
     else:
         channel.set_volume(regvol/100)
 
-my_menu=Menu(root)
-root.config(menu=my_menu)
-add_song_menu=Menu(my_menu)
-my_menu.add_cascade(label="File",menu=add_song_menu)
-add_song_menu.add_command(label="Import Songs From Osu!",command=importSongs)
-add_song_menu.add_command(label="Re-import all songs", command=reimportall)
-add_song_menu.add_command(label="Delete song",command=deletesong)
-add_song_menu.add_separator()
-add_song_menu.add_command(label="Select osu! songs directory", command=getPath)
-
-
+#toggle the search bar
 def searchToggle():
     if searchBarToggle.get() == 0:
         searchValue.set("")
@@ -356,31 +274,16 @@ def searchToggle():
         searchTxt.grid(row=3, column=0)
         searchBar.grid(row=3, column=1, columnspan=7, pady=5)
 
-other_menu = Menu(my_menu)
-my_menu.add_cascade(label="Other", menu=other_menu)
-searchBarToggle = IntVar()
-searchBarToggle.set(0)
-other_menu.add_checkbutton(label="Search Bar", variable=searchBarToggle, command=searchToggle)
-
-searchTxt = Label(root, bg="gray15", fg="white", text="Search:")
-searchTxt.config(font=('arial',12),bd=0,highlightthickness=0)
-
+#search function to search songs in the app
 def search(searchValue):
-    songs_list.delete(0, END)
+    songsList.delete(0, END)
     tmp = searchValue.get()
     for element in slist:
         if tmp in element:            
-            songs_list.insert(END, element)
+            songsList.insert(END, element)
 
-searchValue = StringVar()
-searchValue.set("")
-searchValue.trace_add("write", lambda name, index, mode, sv=searchValue : search(sv))
-searchBar = Entry(root, textvariable=searchValue,width=60,bg="gray15", fg="white", insertbackground="white")
-searchBar.config(bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial', 13), relief='groove')
-
-
+#window for updates info
 def versionWin(update):
-
     def updateApp():
         webbrowser.open("https://github.com/OJddJO/osu-music-player.exe/releases/latest/")
         vWin.destroy()
@@ -410,6 +313,7 @@ def versionWin(update):
 
     threading.Thread(target = vWin.mainloop)
 
+#check version, if not latest open "versionWin" window
 update = False
 def testVersion(launch=False):
     global update
@@ -422,25 +326,137 @@ def testVersion(launch=False):
     if not launch:
         versionWin(update)
 
-other_menu.add_command(label="Check for update", command=testVersion)
-
-
+#shutdown function
 def shutdown():
     global run
     run = False
     root.quit()
-root.protocol("WM_DELETE_WINDOW", shutdown)
 
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+#main config
+root=Tk()
+root.title('osu!player')
+root.resizable(False, False)
+root.config(bg="gray15")
+
+mixer.init()
+channel = mixer.Channel(1)
+
+#widget
+songsList=Listbox(root, selectmode=SINGLE, height=14, width=65)
+songsList.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+songsList.grid(columnspan=8)
+
+nowplaying=StringVar()
+nowplaying.set(f"{state}")
+playingLabel=Label(root,textvariable=nowplaying,width=55)
+playingLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
+playingLabel.grid(row=1, column=0, columnspan=6, pady=5)
+
+playButton=Button(root,text="▶", width =4, command=Play)
+playButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+playButton.grid(row=2,column=0, padx=5)
+
+pauseButton=Button(root,text="⏸️", width =4, command=Pause)
+pauseButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+pauseButton.grid(row=2,column=1, padx=5)
+
+stopButton=Button(root,text="⏹️", width =4, command=Stop)
+stopButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+stopButton.grid(row=2,column=2, padx=5)
+
+previousButton=Button(root,text="⏮️", width =4, command=Previous)
+previousButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+previousButton.grid(row=2,column=3, padx=5)
+
+nextButton=Button(root,text="⏭️", width =4, command=Next)
+nextButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+nextButton.grid(row=2,column=4, padx=5)
+
+looptxt = StringVar()
+looptxt.set("🔁:✅")
+loopButton=Button(root, textvariable=looptxt, width=5, command=Loop)
+loopButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+loopButton.grid(row=2,column=5, padx=5)
+
+shuffletxt = StringVar()
+shuffletxt.set("🔀:✅")
+shuffleButton=Button(root, textvariable=shuffletxt, width=5, command=Shuffle)
+shuffleButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+shuffleButton.grid(row=2,column=6, padx=5)
+
+kclabel = StringVar()
+kclabel.set("⌨:✅")
+kc = Button(root, textvariable=kclabel, width=5, command=kcstate)
+kc.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+kc.grid(row=2,column=7)
+
+voltxt = Label(root, bg="gray15", fg="white", text="Volume:")
+voltxt.config(font=('arial',12),bd=0,highlightthickness=0)
+voltxt.grid(row=1, column=6, pady=5)
+
+volume = Scale(root, from_=0, to=100, orient=HORIZONTAL, variable=IntVar)
+volume.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+volume.grid(row=1, column=7, pady=5)
+volume.set(100)
+
+searchTxt = Label(root, text="Search:")
+searchTxt.config(bg="gray15", fg="white", bd=0, highlightthickness=0, font=('arial',12))
+searchValue = StringVar()
+searchValue.set("")
+searchValue.trace_add("write", lambda name, index, mode, sv=searchValue : search(sv))
+searchBar = Entry(root, textvariable=searchValue, width=60)
+searchBar.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', insertbackground="white", font=('arial', 13))
+
+#menu
+menuBar=Menu(root)
+root.config(menu=menuBar)
+
+songMenu=Menu(menuBar)
+menuBar.add_cascade(label="File",menu=songMenu)
+songMenu.add_command(label="Import Songs From Osu!",command=importSongs)
+songMenu.add_command(label="Re-import all songs", command=reimportall)
+songMenu.add_command(label="Delete song",command=deletesong)
+songMenu.add_separator()
+songMenu.add_command(label="Select osu! songs directory", command=getPath)
+
+otherMenu = Menu(menuBar)
+menuBar.add_cascade(label="Other", menu=otherMenu)
+searchBarToggle = IntVar()
+searchBarToggle.set(0)
+otherMenu.add_command(label="Check for update", command=testVersion)
+otherMenu.add_checkbutton(label="Search Bar", variable=searchBarToggle, command=searchToggle)
+
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+#run
+#test if osu! directory exists
+try:
+    path = open("path.data").read().replace("/", "\\").replace("user", user)
+    if not os.path.exists(path):
+        getPath()
+except:
+    getPath()
 
 importSongs()
-testVersion(launch=True)
 
-root.iconbitmap("osu-icon-28.ico")
-
+#run Discord RPC
 threadA = threading.Thread(target= changeStatus)
 threadA.start()
 
+#after window creation config (icon and shutdown button)
+root.update()
+root.iconbitmap("osu-icon-28.ico")
+root.protocol("WM_DELETE_WINDOW", shutdown)
 
+#auto check update
+testVersion(launch=True)
+
+#mainloop
+run = True
 while run:
     root.update()
     testPlaying()
