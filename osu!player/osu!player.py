@@ -13,9 +13,7 @@ import requests
 import webbrowser
 
 user = os.getlogin()
-
 slist = []
-
 run = True
 
 #RPC
