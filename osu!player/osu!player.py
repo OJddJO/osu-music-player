@@ -29,7 +29,6 @@ try:
     RPC.connect()
 except:
     pass
-run = True
 
 
 def getPath():
