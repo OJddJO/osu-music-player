@@ -381,7 +381,7 @@ searchBar.config(bg="gray15",fg="white",bd=2,highlightthickness=0,font=('arial',
 
 
 
-def versionWin(update):
+def versionWin():
 
     def updateApp():
         webbrowser.open("https://github.com/OJddJO/osu-music-player.exe/releases/latest/")
@@ -399,25 +399,23 @@ def versionWin(update):
     txtUpdate.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
     txtUpdate.pack()
 
-    if update:
-        txt.set("Update Available !")
-        updateButton = Button(vWin, text="Update", command=updateApp)
-        updateButton.config(bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
-        updateButton.pack()
-    else:
-        txt.set("Your version is the latest !")
+    txt.set("Update Available !")
+    updateButton = Button(vWin, text="Update", command=updateApp)
+    updateButton.config(bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
+    updateButton.pack()
     
-    vWin.mainloop()
+    def shutdown():
+        vWin.destroy()
+    vWin.protocol("WM_DELETE_WINDOW", shutdown)
+
+    threading.Thread(target = vWin.mainloop)
 
 
-update = False
 def testVersion():
-    global update
     version = open("version.lock").read()
     latestVersion = requests.get("https://api.github.com/repos/OJddJO/osu-music-player.exe/releases/latest").json()["tag_name"]
     if version != latestVersion:
-        update = True
-        versionWin(update)
+        versionWin()
 
 other_menu.add_command(label="Check for update", command=testVersion)
 
