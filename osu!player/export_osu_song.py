@@ -11,7 +11,7 @@ def export():
     blacklist = ["<", ">", ":", "\"", "/", "\\", "|", "*", "?"]
 
     src = open("path.data").read()
-    src = src.replace("user", user)
+    src = src.replace("user", user).replace("/", "\\")
     dst = "Osu\\"
 
     files = os.listdir(src)
