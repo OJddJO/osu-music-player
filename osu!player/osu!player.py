@@ -1,6 +1,6 @@
+from tkinter import *
 from tkinter import filedialog
 from pygame import mixer
-from tkinter import *
 from pypresence import Presence
 from time import time
 from random import randint
@@ -16,14 +16,17 @@ user = os.getlogin()
 
 slist = []
 
+run = True
+
 #RPC
 start = time()
 clientid = '980519752025931836'
 try:
     RPC = Presence(clientid)
     RPC.connect()
+    print("Discord RPC is ready !")
 except:
-    pass
+    print("Discord not found .")
 
 
 #function
@@ -45,7 +48,7 @@ def changeStatus():
                 large_image="osu-icon-28",
                 large_text="Osu!Player",
                 state=state,
-                details=desc,
+                details=desc.replace(".mp3", ""),
                 start=start,
                 buttons=[{"label": "Download the app", "url": "https://github.com/OJddJO/osu-music-player.exe"}]
             )
@@ -456,7 +459,6 @@ root.protocol("WM_DELETE_WINDOW", shutdown)
 testVersion(launch=True)
 
 #mainloop
-run = True
 while run:
     root.update()
     testPlaying()
