@@ -1,5 +1,4 @@
 from tkinter import filedialog
-from tokenize import String
 from pygame import mixer
 from tkinter import *
 from pypresence import Presence
