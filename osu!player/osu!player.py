@@ -226,36 +226,42 @@ def Next():
 #toggle loop
 loop = True
 def Loop():
-    global loop, looptxt
+    global loop, loopImage
     if loop == True:
         loop = False
-        looptxt.set("🔁:❎")
+        loopButton.grid_remove()
+        notLoopButton.grid()
     elif loop == False:
         loop = True
-        looptxt.set("🔁:✅")
+        notLoopButton.grid_remove()
+        loopButton.grid()
 
 #toggle shuffle
 x=0
 prevx = []
 shuffle = True
 def Shuffle():
-    global shuffle, shuffletxt
+    global shuffle
     if shuffle == True:
         shuffle = False
-        shuffletxt.set("🔀:❎")
+        shuffleButton.grid_remove()
+        notShuffleButton.grid()
     elif shuffle == False:
         shuffle = True
-        shuffletxt.set("🔀:✅")
+        notShuffleButton.grid_remove()
+        shuffleButton.grid()
 
 #toggle keyboard control
 def kcstate():
-    global kcontrol, kclabel
+    global kcontrol
     if kcontrol == True:
         kcontrol = False
-        kclabel.set("⌨:❎")
+        kc.grid_remove()
+        notKc.grid()
     elif kcontrol == False:
         kcontrol = True
-        kclabel.set("⌨:✅")
+        notKc.grid_remove()
+        kc.grid()
 
 #change the volume
 regvol = 100
@@ -348,53 +354,70 @@ mixer.init()
 channel = mixer.Channel(1)
 
 #widget
-songsList=Listbox(root, selectmode=SINGLE, height=14, width=65)
+songsList=Listbox(root, selectmode=SINGLE, height=14, width=70)
 songsList.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
 songsList.grid(columnspan=8)
 
 nowplaying=StringVar()
 nowplaying.set(f"{state}")
-playingLabel=Label(root,textvariable=nowplaying,width=55)
+playingLabel=Label(root,textvariable=nowplaying,width=60)
 playingLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
 playingLabel.grid(row=1, column=0, columnspan=6, pady=5)
 
-playButton=Button(root,text="▶", width =4, command=Play)
-playButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+playImage = PhotoImage(file="icon/play_button.png")
+playButton=Button(root, image=playImage, command=Play)
+playButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
 playButton.grid(row=2,column=0, padx=5)
 
-pauseButton=Button(root,text="⏸️", width =4, command=Pause)
-pauseButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+pauseImage = PhotoImage(file="icon/pause_button.png")
+pauseButton=Button(root, image=pauseImage, command=Pause)
+pauseButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
 pauseButton.grid(row=2,column=1, padx=5)
 
-stopButton=Button(root,text="⏹️", width =4, command=Stop)
-stopButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+stopImage = PhotoImage(file="icon/stop_button.png")
+stopButton=Button(root, image=stopImage, command=Stop)
+stopButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
 stopButton.grid(row=2,column=2, padx=5)
 
-previousButton=Button(root,text="⏮️", width =4, command=Previous)
-previousButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+previousImage = PhotoImage(file="icon/previous_button.png")
+previousButton=Button(root, image=previousImage, command=Previous)
+previousButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
 previousButton.grid(row=2,column=3, padx=5)
 
-nextButton=Button(root,text="⏭️", width =4, command=Next)
-nextButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+nextImage = PhotoImage(file="icon/next_button.png")
+nextButton=Button(root, image=nextImage, command=Next)
+nextButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
 nextButton.grid(row=2,column=4, padx=5)
 
-looptxt = StringVar()
-looptxt.set("🔁:✅")
-loopButton=Button(root, textvariable=looptxt, width=5, command=Loop)
-loopButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+loopImage = PhotoImage(file="icon/loop_button.png")
+loopButton=Button(root, image=loopImage, command=Loop)
+loopButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
 loopButton.grid(row=2,column=5, padx=5)
+notLoopImage = PhotoImage(file="icon/not_loop_button.png")
+notLoopButton=Button(root, image=notLoopImage, command=Loop)
+notLoopButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+notLoopButton.grid(row=2,column=5, padx=5)
+notLoopButton.grid_remove()
 
-shuffletxt = StringVar()
-shuffletxt.set("🔀:✅")
-shuffleButton=Button(root, textvariable=shuffletxt, width=5, command=Shuffle)
-shuffleButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
+shuffleImage = PhotoImage(file="icon/shuffle_button.png")
+shuffleButton=Button(root, image=shuffleImage, command=Shuffle)
+shuffleButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
 shuffleButton.grid(row=2,column=6, padx=5)
+notShuffleImage = PhotoImage(file="icon/not_shuffle_button.png")
+notShuffleButton = Button(root, image=notShuffleImage, command=Shuffle)
+notShuffleButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+notShuffleButton.grid(row=2,column=6, padx=5)
+notShuffleButton.grid_remove()
 
-kclabel = StringVar()
-kclabel.set("⌨:✅")
-kc = Button(root, textvariable=kclabel, width=5, command=kcstate)
-kc.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial',20))
-kc.grid(row=2,column=7)
+kcImage = PhotoImage(file="icon/keyboard_button.png")
+kc = Button(root, image=kcImage, command=kcstate)
+kc.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+kc.grid(row=2,column=7, padx=5)
+notKcImage = PhotoImage(file="icon/not_keyboard_button.png")
+notKc = Button(root, image=notKcImage, command=kcstate)
+notKc.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+notKc.grid(row=2,column=7, padx=5)
+notKc.grid_remove()
 
 voltxt = Label(root, bg="gray15", fg="white", text="Volume:")
 voltxt.config(font=('arial',12),bd=0,highlightthickness=0)
