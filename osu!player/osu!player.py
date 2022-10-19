@@ -288,7 +288,7 @@ def search(searchValue):
     songsList.delete(0, END)
     tmp = searchValue.get()
     for element in slist:
-        if tmp in element:            
+        if tmp.lower() in element.lower():
             songsList.insert(END, element)
 
 #window for updates info
