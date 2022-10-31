@@ -1,4 +1,4 @@
-# Osu!Player (Not updated anymore)
+# Osu!Player (Code)
 
 ***UPDATED VERSION*** -> **[Here](https://github.com/OJddJO/osu-music-player.exe)**
 
