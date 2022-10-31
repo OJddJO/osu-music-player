@@ -488,6 +488,7 @@ while run:
     changeVol()
     kinput()
 
+threadA.close()
 try:
     RPC.close()
 except:
