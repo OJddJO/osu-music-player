@@ -487,3 +487,8 @@ while run:
     testPlaying()
     changeVol()
     kinput()
+
+try:
+    RPC.close()
+except:
+    pass
