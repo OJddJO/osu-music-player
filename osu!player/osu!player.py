@@ -500,7 +500,7 @@ while run:
 threadA.close()
 
 #save volume in volume.sav
-open("volume.sav", 'w').write(int(volume.get()))
+open("volume.sav", 'w').write(str(int(volume.get())))
 
 try:
     RPC.close()
