@@ -460,6 +460,15 @@ otherMenu.add_checkbutton(label="Search Bar", variable=searchBarToggle, command=
 
 #run
 #test if osu! directory exists
+
+try:
+    savedVolume = open("volume.sav").read()
+except:
+    savedVolume = 100
+    open("volume.sav", 'w').write("100")
+
+volume.set(int(savedVolume))
+
 try:
     path = open("path.data").read().replace("/", "\\").replace("user", user)
     if not os.path.exists(path):
@@ -489,6 +498,10 @@ while run:
     kinput()
 
 threadA.close()
+
+#save volume in volume.sav
+open("volume.sav", 'w').write(int(volume.get()))
+
 try:
     RPC.close()
 except:
