@@ -338,6 +338,8 @@ def testVersion(launch=False):
 #shutdown function
 def shutdown():
     global run
+    #save volume in volume.sav
+    open("volume.sav", 'w').write(str(int(volume.get())))
     run = False
     root.quit()
 
@@ -498,9 +500,6 @@ while run:
     kinput()
 
 threadA.close()
-
-#save volume in volume.sav
-open("volume.sav", 'w').write(str(int(volume.get())))
 
 try:
     RPC.close()
