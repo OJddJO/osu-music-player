@@ -132,6 +132,19 @@ def deletesong():
     curr_song=songsList.curselection()
     songsList.delete(curr_song[0])
 
+def playSelected(event):
+    global desc, state
+    channel.pause()
+    channel.stop()
+    song=songsList.get(ACTIVE)
+    songsList.selection_set(slist.index(song))
+    desc = song
+    state = "Listening"
+    song=f'Osu\\{song}'
+    song = mixer.Sound(song)
+    channel.play(song)
+    nowplaying.set(f"{state}: {desc}")
+
 #play the selected song or unpause the current song
 def Play():
     global desc, state
@@ -359,6 +372,7 @@ channel = mixer.Channel(1)
 songsList=Listbox(root, selectmode=SINGLE, height=14, width=70)
 songsList.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
 songsList.grid(columnspan=8)
+songsList.bind("<Double-Button-1>", playSelected)
 
 nowplaying=StringVar()
 nowplaying.set(f"{state}")
