@@ -426,19 +426,25 @@ def importPlaylist():
         playlistWin.destroy()
 
     def usePlaylist():
-        global slist
-        slist = []
-        i = playlistListbox.curselection()[0]
-        playlist = eval(open(f'playlists\\{playlistPath[i]}').read())
-        songsList.delete(0, END)
-        for element in playlist:
-            songsList.insert(END, element)
-            slist.append(element)
-        playlistWin.destroy()
+        try:
+            global slist
+            slist = []
+            i = playlistListbox.curselection()[0]
+            playlist = eval(open(f'playlists\\{playlistPath[i]}').read())
+            songsList.delete(0, END)
+            for element in playlist:
+                songsList.insert(END, element)
+                slist.append(element)
+            playlistWin.destroy()
+        except:
+            pass
 
     def changePlaylistName():
-        i = playlistListbox.curselection()[0]
-        playlistNameVar.set(playlistPath[i])
+        try:
+            i = playlistListbox.curselection()[0]
+            playlistNameVar.set(playlistPath[i])
+        except:
+            pass
 
     playlistWin = Toplevel(root)
     playlistWin.iconbitmap("osu-icon-28.ico")
@@ -484,13 +490,19 @@ def deletePlaylist():
         playlistWin.destroy()
 
     def delete():
-        i = playlistListbox.curselection()[0]
-        os.remove(f"playlists\\{playlistPath[i]}")
-        playlistWin.destroy()
+        try:
+            i = playlistListbox.curselection()[0]
+            os.remove(f"playlists\\{playlistPath[i]}")
+            playlistWin.destroy()
+        except :
+            pass
 
     def changePlaylistName():
-        i = playlistListbox.curselection()[0]
-        playlistNameVar.set(playlistPath[i])
+        try:
+            i = playlistListbox.curselection()[0]
+            playlistNameVar.set(playlistPath[i])
+        except:
+            pass
 
     playlistWin = Toplevel(root)
     playlistWin.iconbitmap("osu-icon-28.ico")
