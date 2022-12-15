@@ -105,10 +105,13 @@ def testPlaying():
 
 #import all songs, previously imported songs will not be re-checked -> import.data
 def importSongs():
+    global slist
+    slist = []
+    songsList.delete(0, END)
     temp_song=export_osu_song.export()
 
     for s in temp_song:
-        s=s.replace("Osu/","")
+        s=s.replace("Osu/","").replace(".mp3","")
         songsList.insert(END,s)
         slist.append(s)
 
@@ -120,7 +123,7 @@ def reimportall():
     slist = []
     songsList.delete(0, END)
     os.remove(path)
-    path2 = 'Osu\\'
+    path2 = 'Osu'
     tmp = os.listdir(path2)
     for element in tmp:
         os.remove(path2+"\\"+element)
@@ -140,7 +143,7 @@ def playSelected(event):
     songsList.selection_set(slist.index(song))
     desc = song
     state = "Listening"
-    song=f'Osu\\{song}'
+    song=f'Osu\\{song}.mp3'
     song = mixer.Sound(song)
     channel.play(song)
     nowplaying.set(f"{state}: {desc}")
@@ -158,7 +161,7 @@ def Play():
         songsList.selection_set(slist.index(song))
         desc = song
         state = "Listening"
-        song=f'Osu\\{song}'
+        song=f'Osu\\{song}.mp3'
         song = mixer.Sound(song)
         channel.play(song)
     nowplaying.set(f"{state}: {desc}")
@@ -199,7 +202,7 @@ def Previous():
     global state, desc
     state = "Listening"
     desc = temp2
-    temp2=f'Osu\\{temp2}'
+    temp2=f'Osu\\{temp2}.mp3'
     song = mixer.Sound(temp2)
     channel.play(song)
     songsList.selection_clear(0,END)
@@ -227,7 +230,7 @@ def Next():
     global state, desc
     state = "Listening"
     desc = temp
-    temp=f'Osu\\{temp}'
+    temp=f'Osu\\{temp}.mp3'
     song = mixer.Sound(temp)
     channel.play(song)
     songsList.selection_clear(0,END)
@@ -351,10 +354,181 @@ def testVersion(launch=False):
 #shutdown function
 def shutdown():
     global run
-    #save volume in volume.sav
-    open("volume.sav", 'w').write(str(int(volume.get())))
+    #save data to files
+    open("data/volume.sav", 'w').write(str(int(volume.get())))
+    open("data/shuffle.sav", 'w').write(str(shuffle))
+    open("data/loop.sav", 'w').write(str(loop))
+    open("data/kcontrol.sav", 'w').write(str(kcontrol))
     run = False
     root.quit()
+
+#playlist functions
+def createPlaylist():
+    def create():
+        name = playlistName.get()
+        songs = songsList.curselection()
+        songsFile = []
+        for index in songs:
+            songsFile.append(slist[index])
+        if name == "":
+            pass
+        else:
+            open(f"playlists/{name}.txt", 'w').write(str(songsFile))
+            playlistWin.destroy()
+
+    def shutdown():
+        playlistWin.destroy()
+
+    try:
+        os.listdir("playlists")
+    except:
+        os.mkdir("playlists")
+
+    playlistWin = Toplevel(root)
+    playlistWin.iconbitmap("osu-icon-28.ico")
+    playlistWin.config(bg="gray15")
+    playlistWin.title("Create a playlist")
+    playlistWin.resizable(False, False)
+    playlistWin.protocol("WM_DELETE_WINDOW", shutdown)
+
+    songsList=Listbox(playlistWin, selectmode=MULTIPLE, height=14, width=50)
+    songsList.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+    songsList.grid(columnspan=8)
+
+    playlistLabel = Label(playlistWin, text="Name :")
+    playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+    playlistLabel.grid(row=1, column=0, pady=5)
+
+    playlistName = StringVar()
+    playlistName.set("")
+    playlistNameEntry = Entry(playlistWin, textvariable=playlistName, width=40, justify='center')
+    playlistNameEntry.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+    playlistNameEntry.grid(row=1, column=1, columnspan=5, pady=5)
+
+    createButton = Button(playlistWin, text="Create", command=create)
+    createButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+    createButton.grid(row=1, column=6, pady=5)
+
+    cancelButton = Button(playlistWin, text="Cancel", command=shutdown)
+    cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+    cancelButton.grid(row=1, column=7, pady=5)
+
+    temp_song=export_osu_song.export()
+
+    for s in temp_song:
+        s=s.replace("Osu/","").replace(".mp3","")
+        songsList.insert(END,s)
+        slist.append(s)
+
+
+def importPlaylist():
+    def shutdown():
+        playlistWin.destroy()
+
+    def usePlaylist():
+        global slist
+        slist = []
+        i = playlistListbox.curselection()[0]
+        playlist = eval(open(f'playlists\\{playlistPath[i]}').read())
+        songsList.delete(0, END)
+        for element in playlist:
+            songsList.insert(END, element)
+            slist.append(element)
+        playlistWin.destroy()
+
+    def changePlaylistName():
+        i = playlistListbox.curselection()[0]
+        playlistNameVar.set(playlistPath[i])
+
+    playlistWin = Toplevel(root)
+    playlistWin.iconbitmap("osu-icon-28.ico")
+    playlistWin.config(bg="gray15")
+    playlistWin.title("Import a playlist")
+    playlistWin.resizable(False, False)
+    playlistWin.protocol("WM_DELETE_WINDOW", shutdown)
+
+    playlistListbox = Listbox(playlistWin, selectmode=SINGLE, height=14, width=50)
+    playlistListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+    playlistListbox.grid(columnspan=8)
+    playlistListbox.bind("<Double-Button-1>", lambda args, usePlaylist=usePlaylist: usePlaylist())
+    playlistListbox.bind("<Button-1>", lambda args, changePlaylistName=changePlaylistName: changePlaylistName())
+
+    playlistLabel = Label(playlistWin, text="Name:")
+    playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+    playlistLabel.grid(row=1, column=0, pady=5)
+
+    playlistNameVar = StringVar()
+    playlistNameVar.set("")
+    playlistNameLabel = Label(playlistWin, textvariable=playlistNameVar, width=40, justify='center')
+    playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
+    playlistNameLabel.grid(row=1, column=1, columnspan=5, pady=5)
+
+    useButton = Button(playlistWin, text="Select", command=usePlaylist)
+    useButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+    useButton.grid(row=1, column=6, pady=5)
+
+    cancelButton = Button(playlistWin, text="Cancel", command=shutdown)
+    cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+    cancelButton.grid(row=1, column=7, pady=5)
+
+    for element in os.listdir("playlists"):
+        playlistPath = []
+        if element.endswith(".txt"):
+            playlistPath.append(element)
+            playlistName = element.replace(".txt", "")
+            playlistListbox.insert(END, playlistName)
+
+
+def deletePlaylist():
+    def shutdown():
+        playlistWin.destroy()
+
+    def delete():
+        i = playlistListbox.curselection()[0]
+        os.remove(f"playlists\\{playlistPath[i]}")
+        playlistWin.destroy()
+
+    def changePlaylistName():
+        i = playlistListbox.curselection()[0]
+        playlistNameVar.set(playlistPath[i])
+
+    playlistWin = Toplevel(root)
+    playlistWin.iconbitmap("osu-icon-28.ico")
+    playlistWin.config(bg="gray15")
+    playlistWin.title("Delete a playlist")
+    playlistWin.resizable(False, False)
+    playlistWin.protocol("WM_DELETE_WINDOW", shutdown)
+
+    playlistListbox = Listbox(playlistWin, selectmode=SINGLE, height=14, width=50)
+    playlistListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+    playlistListbox.grid(columnspan=8)
+    playlistListbox.bind("<Double-Button-1>", lambda args, usePlaylist=delete: usePlaylist())
+    playlistListbox.bind("<Button-1>", lambda args, changePlaylistName=changePlaylistName: changePlaylistName())
+
+    playlistLabel = Label(playlistWin, text="Name:")
+    playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+    playlistLabel.grid(row=1, column=0, pady=5)
+
+    playlistNameVar = StringVar()
+    playlistNameVar.set("")
+    playlistNameLabel = Label(playlistWin, textvariable=playlistNameVar, width=40, justify='center')
+    playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
+    playlistNameLabel.grid(row=1, column=1, columnspan=5, pady=5)
+
+    deleteButton = Button(playlistWin, text="Delete", command=delete)
+    deleteButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+    deleteButton.grid(row=1, column=6, pady=5)
+
+    cancelButton = Button(playlistWin, text="Cancel", command=shutdown)
+    cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+    cancelButton.grid(row=1, column=7, pady=5)
+
+    for element in os.listdir("playlists"):
+        playlistPath = []
+        if element.endswith(".txt"):
+            playlistPath.append(element)
+            playlistName = element.replace(".txt", "")
+            playlistListbox.insert(END, playlistName)
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -457,12 +631,18 @@ menuBar=Menu(root)
 root.config(menu=menuBar)
 
 songMenu=Menu(menuBar)
-menuBar.add_cascade(label="File",menu=songMenu)
-songMenu.add_command(label="Import Songs From Osu!",command=importSongs)
+menuBar.add_cascade(label="Songs",menu=songMenu)
+songMenu.add_command(label="Reset songs list",command=importSongs)
 songMenu.add_command(label="Re-import all songs", command=reimportall)
 songMenu.add_command(label="Delete song",command=deletesong)
 songMenu.add_separator()
 songMenu.add_command(label="Select osu! songs directory", command=getPath)
+
+playlistMenu = Menu(menuBar)
+menuBar.add_cascade(label="Playlist", menu=playlistMenu)
+playlistMenu.add_command(label="New Playlist", command=createPlaylist)
+playlistMenu.add_command(label="Delete Playlist", command=deletePlaylist)
+playlistMenu.add_command(label="Import playlist", command=importPlaylist)
 
 otherMenu = Menu(menuBar)
 menuBar.add_cascade(label="Other", menu=otherMenu)
@@ -475,16 +655,54 @@ otherMenu.add_checkbutton(label="Search Bar", variable=searchBarToggle, command=
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 #run
-#test if osu! directory exists
-
+#load saved data
 try:
-    savedVolume = open("volume.sav").read()
+    savedData = {
+        "volume": open("data/volume.sav").read(),
+        "shuffle": eval(open("data/shuffle.sav").read()),
+        "loop": eval(open("data/loop.sav").read()),
+        "kcontrol": eval(open("data/kcontrol.sav").read())
+    }
 except:
-    savedVolume = 100
-    open("volume.sav", 'w').write("100")
+    os.makedirs("data")
+    savedData = {
+        "volume": "100",
+        "shuffle": True,
+        "loop": True,
+        "kcontrol": True
+    }
+    open("data/volume.sav", 'w').write("100")
+    open("data/shuffle.sav", 'w').write("True")
+    open("data/loop.sav", 'w').write("True")
+    open("data/kcontrol.sav", 'w').write("True")
 
-volume.set(int(savedVolume))
+volume.set(int(savedData["volume"]))
+shuffle = savedData["shuffle"]
+loop = savedData["loop"]
+kcontrol = savedData["kcontrol"]
 
+#set buttons
+if not shuffle:
+    shuffleButton.grid_remove()
+    notShuffleButton.grid()
+else:
+    shuffleButton.grid()
+    notShuffleButton.grid_remove()
+if not loop:
+    loopButton.grid_remove()
+    notLoopButton.grid()
+else:
+    loopButton.grid()
+    notLoopButton.grid_remove()
+if not kcontrol:
+    kc.grid_remove()
+    notKc.grid()
+else:
+    kc.grid()
+    notKc.grid_remove()
+
+
+#your osu! game directory
 try:
     path = open("path.data").read().replace("/", "\\").replace("user", user)
     if not os.path.exists(path):
@@ -513,9 +731,4 @@ while run:
     changeVol()
     kinput()
 
-threadA.close()
-
-try:
-    RPC.close()
-except:
-    pass
+quit()

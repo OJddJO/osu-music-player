@@ -12,7 +12,7 @@ def export():
 
     src = open("path.data").read()
     src = src.replace("user", user).replace("/", "\\")
-    dst = "Osu\\"
+    dst = r"Osu\\"
 
     files = os.listdir(src)
 
@@ -22,6 +22,7 @@ def export():
         test = []
 
     files2 = []
+    artist = []
     for dirname in files:
         if dirname not in test:
             try:
@@ -34,10 +35,11 @@ def export():
                             tmppath = path + '\\' + f
                             tmp = open(tmppath, encoding="utf-8").read()
                             i = tmp.find("Title:")
-                            i2 = tmp.find("TitleUnicode:")
-                            if i2 == -1:
-                                i2 = tmp.find("Artist:")
-                            title = tmp[i+6:i2-1]
+                            i2 = tmp.find("\n", i)
+                            title = tmp[i+6:i2]
+                            i = tmp.find("Artist:")
+                            i2 = tmp.find("\n", i)
+                            artist.append(tmp[i+7:i2])
                         else:
                             pass
                 for blacklisted in blacklist:
@@ -45,10 +47,13 @@ def export():
                 for t in titles:
                     if fuzz.partial_ratio(t, title) >= 90:
                         title = t
+                for a in artist:
+                    if fuzz.partial_ratio(a, artist[-1]) >= 90:
+                        artist[-1] = a
                 titles.append(title)
                 files2.append(dirname)
-            except:
-                pass
+            except Exception as e:
+                print(e)
 
 
     open('import.data', 'w').write(str(test))
@@ -77,7 +82,10 @@ def export():
             for f in os.listdir(path):
                 if f.find(fname) == 0:
                     tmpsrc = path+'\\'+f
-                    tmpdst = dst+'\\'+titles[count]+'.mp3'
+                    blacklist = ["<", ">", ":", "\"", "/", "|", "*", "?"]
+                    tmpdst = f'{dst}{artist[count]} - {titles[count]}.mp3'
+                    for blacklisted in blacklist:
+                        tmpdst = tmpdst.replace(blacklisted, "")
 
                     if f.endswith("3"):
                         shutil.copy(tmpsrc, tmpdst)
@@ -90,7 +98,7 @@ def export():
                         song.initTag()
                     song.tag.album = ''
                     song.tag.date = ''
-                    song.tag.artist = ''
+                    song.tag.artist = artist[count]
                     song.tag.title = titles[count]
                     song.tag.track_num = 0
                     try:
