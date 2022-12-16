@@ -523,8 +523,8 @@ def deletePlaylist():
     cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
     cancelButton.grid(row=1, column=7, pady=5)
 
+    playlistPath = []
     for element in os.listdir("playlists"):
-        playlistPath = []
         if element.endswith(".txt"):
             playlistPath.append(element)
             playlistName = element.replace(".txt", "")
