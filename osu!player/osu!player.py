@@ -426,25 +426,19 @@ def importPlaylist():
         playlistWin.destroy()
 
     def usePlaylist():
-        try:
-            global slist
-            slist = []
-            i = playlistListbox.curselection()[0]
-            playlist = eval(open(f'playlists\\{playlistPath[i]}').read())
-            songsList.delete(0, END)
-            for element in playlist:
-                songsList.insert(END, element)
-                slist.append(element)
-            playlistWin.destroy()
-        except:
-            pass
+        global slist
+        slist = []
+        i = playlistListbox.curselection()[0]
+        playlist = eval(open(f'playlists\\{playlistPath[i]}').read())
+        songsList.delete(0, END)
+        for element in playlist:
+            songsList.insert(END, element)
+            slist.append(element)
+        playlistWin.destroy()
 
     def changePlaylistName():
-        try:
-            i = playlistListbox.curselection()[0]
-            playlistNameVar.set(playlistPath[i])
-        except:
-            pass
+        i = playlistListbox.curselection()[0]
+        playlistNameVar.set(playlistPath[i])
 
     playlistWin = Toplevel(root)
     playlistWin.iconbitmap("osu-icon-28.ico")
@@ -477,8 +471,8 @@ def importPlaylist():
     cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
     cancelButton.grid(row=1, column=7, pady=5)
 
+    playlistPath = []
     for element in os.listdir("playlists"):
-        playlistPath = []
         if element.endswith(".txt"):
             playlistPath.append(element)
             playlistName = element.replace(".txt", "")
@@ -490,19 +484,13 @@ def deletePlaylist():
         playlistWin.destroy()
 
     def delete():
-        try:
-            i = playlistListbox.curselection()[0]
-            os.remove(f"playlists\\{playlistPath[i]}")
-            playlistWin.destroy()
-        except :
-            pass
+        i = playlistListbox.curselection()[0]
+        os.remove(f"playlists\\{playlistPath[i]}")
+        playlistWin.destroy()
 
     def changePlaylistName():
-        try:
-            i = playlistListbox.curselection()[0]
-            playlistNameVar.set(playlistPath[i])
-        except:
-            pass
+        i = playlistListbox.curselection()[0]
+        playlistNameVar.set(playlistPath[i])
 
     playlistWin = Toplevel(root)
     playlistWin.iconbitmap("osu-icon-28.ico")
