@@ -47,6 +47,9 @@ def export():
                 for t in titles:
                     if fuzz.partial_ratio(t, title) >= 90:
                         title = t
+                for a in artist:
+                    if fuzz.token_sort_ratio(a, artist[-1]) >= 90:
+                        artist[-1] = a
                 titles.append(title)
                 files2.append(dirname)
             except Exception as e:
