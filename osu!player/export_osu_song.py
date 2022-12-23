@@ -45,7 +45,7 @@ def export():
                 for blacklisted in blacklist:
                     title = title.replace(blacklisted, "")
                 for t in titles:
-                    if fuzz.partial_ratio(t, title) >= 90:
+                    if fuzz.token_sort_ratio(t, title) >= 90:
                         title = t
                 for a in artist:
                     if fuzz.token_sort_ratio(a, artist[-1]) >= 90:
