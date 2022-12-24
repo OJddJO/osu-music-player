@@ -95,7 +95,10 @@ def export():
                         song.export(tmpdst, format="mp3")
                     
                     song = eyed3.load(tmpdst)
-                    if not song.tag:
+                    try:
+                        if not song.tag:
+                            song.initTag()
+                    except:
                         song.initTag()
                     song.tag.album = ''
                     song.tag.date = ''
