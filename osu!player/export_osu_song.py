@@ -74,8 +74,9 @@ def export():
                         tmp = open(tmppath, encoding="utf-8").read()
                         tmp2 = str(fr"{tmp}")
                         i = tmp2.find("AudioFilename:")
-                        i2 = tmp2.find("AudioLeadIn:")
-                        fname = tmp2[i+15:i2-1]
+                        i2 = tmp2.find("\n", i)
+                        fname = tmp2[i+15:i2]
+                        print(fname)
                     else:
                         pass
 
