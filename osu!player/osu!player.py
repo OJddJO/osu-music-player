@@ -93,11 +93,16 @@ nosong = False
 def testPlaying():
     global channel, inactiveTicks, nosong, loop
     if not channel.get_busy():
-        if loop:
+        if loop == True:
             if state!='Paused' and state!='Idle':
                 inactiveTicks += 1 
                 if inactiveTicks == 1000:
                     Next()
+        elif loop == "loop":
+            if state!='Paused' and state!='Idle':
+                inactiveTicks += 1 
+                if inactiveTicks == 1000:
+                    Play()
         else:
             Stop()
     else:
@@ -243,14 +248,20 @@ def Next():
 loop = True
 def Loop():
     global loop, loopImage
-    if loop == True:
-        loop = False
-        loopButton.grid_remove()
+    loopList = [False, True, "loop"]
+    index = loopList.index(loop) + 1
+    if index > 2:
+        index = 0
+    loop = loopList[index]
+    if loop == False:
+        loop2Button.grid_remove()
         notLoopButton.grid()
-    elif loop == False:
-        loop = True
+    elif loop == True:
         notLoopButton.grid_remove()
         loopButton.grid()
+    elif loop == "loop":
+        loopButton.grid_remove()
+        loop2Button.grid()
 
 #toggle shuffle
 x=0
@@ -298,6 +309,7 @@ def searchToggle():
     elif searchBarToggle.get() == 1:
         searchTxt.grid(row=3, column=0)
         searchBar.grid(row=3, column=1, columnspan=7, pady=5)
+        searchBar.focus_set()
 
 #search function to search songs in the app
 def search(searchValue):
@@ -600,6 +612,11 @@ notLoopButton=Button(root, image=notLoopImage, command=Loop)
 notLoopButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
 notLoopButton.grid(row=2,column=5, padx=5)
 notLoopButton.grid_remove()
+loop2Image = PhotoImage(file="icon/loop2_button.png")
+loop2Button=Button(root, image=loop2Image, command=Loop)
+loop2Button.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+loop2Button.grid(row=2,column=5, padx=5)
+loop2Button.grid_remove()
 
 shuffleImage = PhotoImage(file="icon/shuffle_button.png")
 shuffleButton=Button(root, image=shuffleImage, command=Shuffle)
@@ -661,7 +678,7 @@ menuBar.add_cascade(label="Other", menu=otherMenu)
 searchBarToggle = IntVar()
 searchBarToggle.set(0)
 otherMenu.add_command(label="Check for update", command=testVersion)
-otherMenu.add_checkbutton(label="Search Bar", variable=searchBarToggle, command=searchToggle)
+menuBar.add_checkbutton(label="Search Bar", variable=searchBarToggle, command=searchToggle)
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
