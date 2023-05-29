@@ -717,12 +717,15 @@ if not shuffle:
 else:
     shuffleButton.grid()
     notShuffleButton.grid_remove()
-if not loop:
-    loopButton.grid_remove()
+if loop == False:
+    loop2Button.grid_remove()
     notLoopButton.grid()
-else:
-    loopButton.grid()
+elif loop == True:
     notLoopButton.grid_remove()
+    loopButton.grid()
+elif loop == "loop":
+    loopButton.grid_remove()
+    loop2Button.grid()
 if not kcontrol:
     kc.grid_remove()
     notKc.grid()
