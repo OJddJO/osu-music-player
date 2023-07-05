@@ -53,7 +53,7 @@ def export():
                 titles.append(title)
                 files2.append(dirname)
             except Exception as e:
-                print(e)
+                print("[ERROR]",e)
 
 
     open('import.data', 'w').write(str(test))
@@ -107,8 +107,8 @@ def export():
                     song.tag.track_num = 0
                     try:
                         song.tag.save()
-                    except:
-                        "a"
+                    except Exception as e:
+                        print("[WARNING]",e)
 
                     print(str(count)+"/"+str(len(titles)-1) + ':' + titles[count] + '        ' + songdir)
                     count += 1   

@@ -24,9 +24,9 @@ clientid = '980519752025931836'
 try:
     RPC = Presence(clientid)
     RPC.connect()
-    print("Discord RPC is ready !")
+    print("[INFO]", "Discord RPC is ready !")
 except:
-    print("Discord not found .")
+    print("[INFO]", "Discord not found .")
 
 
 #function
@@ -65,27 +65,27 @@ def kinput():
             if state == 'Paused' or state == 'Idle':
                 Play()
                 while keyboard.is_pressed('ctrl+alt+space'):
-                    'a'
+                    ''
             elif state == 'Listening':
                 Pause()
                 while keyboard.is_pressed('ctrl+alt+space'):
-                    'a'
+                    ''
         elif keyboard.is_pressed('ctrl+alt+left'):
             Previous()
             while keyboard.is_pressed('ctrl+alt+left'):
-                'a'
+                ''
         elif keyboard.is_pressed('ctrl+alt+right'):
             Next()
             while keyboard.is_pressed('ctrl+alt+right'):
-                'a'
+                ''
         elif keyboard.is_pressed('ctrl+alt+up'):
             volume.set(volume.get()+5)
             while keyboard.is_pressed('ctrl+alt+up'):
-                'a'
+                ''
         elif keyboard.is_pressed('ctrl+alt+down'):
             volume.set(volume.get()-5)
             while keyboard.is_pressed('ctrl+alt+down'):
-                'a'
+                ''
 
 #check if a song is playing if not Next()
 inactiveTicks = 0
@@ -174,7 +174,7 @@ def Play():
 #pause the song
 def Pause():
     channel.pause()
-    global  state
+    global state
     state = "Paused"
     nowplaying.set(f"{state}: {desc}")
 
@@ -394,6 +394,7 @@ def createPlaylist():
     try:
         os.listdir("playlists")
     except:
+        print("[INFO]", "Creating playlists directory")
         os.mkdir("playlists")
 
     playlistWin = Toplevel(root)
@@ -449,7 +450,7 @@ def importPlaylist():
                 slist.append(element)
             playlistWin.destroy()
         except:
-            pass
+            print("[ERROR]", "Can't import playlist")
 
     def changePlaylistName():
         try:
@@ -507,7 +508,7 @@ def deletePlaylist():
             os.remove(f"playlists\\{playlistPath[i]}")
             playlistWin.destroy()
         except:
-            pass
+            print("[ERROR]", "Can't delete playlist")
 
     def changePlaylistName():
         try:
@@ -694,6 +695,7 @@ try:
         "kcontrol": eval(open("data/kcontrol.sav").read())
     }
 except:
+    print("[INFO]", "No saved data found, creating new one")
     os.makedirs("data")
     savedData = {
         "volume": "100",
@@ -741,6 +743,7 @@ try:
     if not os.path.exists(path):
         getPath()
 except:
+    print("[INFO]", "Osu! folder not found, asking user")
     getPath()
 
 importSongs()
