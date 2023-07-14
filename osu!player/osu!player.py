@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import filedialog
+from tkinter.ttk import Separator
 from pygame import mixer
 from pypresence import Presence
 from time import time
@@ -109,8 +110,9 @@ def testPlaying():
         inactiveTicks = 0
 
 #import all songs, previously imported songs will not be re-checked -> import.data
-def importSongs():
+def importSongs(reimport = False):
     global slist
+    print("[INFO]", "Importing songs...")
     slist = []
     songsList.delete(0, END)
     temp_song=export_osu_song.export()
@@ -119,6 +121,7 @@ def importSongs():
         s=s.replace("Osu/","").replace(".mp3","")
         songsList.insert(END,s)
         slist.append(s)
+    print("[INFO]", f"Imported {len(slist)} songs !")
 
 #delete and reimport all songs from osu!
 def reimportall():
@@ -190,59 +193,66 @@ def Stop():
 
 #play previous song
 def Previous():
-    channel.pause()
-    channel.stop()
-    global prevx, slist, shuffle
-    if shuffle:
-        temp2 = slist[prevx[-1]]
-        previous_one = songsList.index(prevx[-1])
-        if len(prevx)!=1:
-            prevx.pop()
-    else:
-        previous_one=songsList.curselection()
-        previous_one=previous_one[0]-1
-        if previous_one < 0:
-            previous_one = len(slist)-1
-        temp2=songsList.get(previous_one)
-    global state, desc
-    state = "Listening"
-    desc = temp2
-    temp2=f'Osu\\{temp2}.mp3'
-    song = mixer.Sound(temp2)
-    channel.play(song)
-    songsList.selection_clear(0,END)
-    songsList.see(previous_one)
-    songsList.activate(previous_one)
-    songsList.selection_set(previous_one)
-    nowplaying.set(f"{state}: {desc}")
+    try:
+        channel.pause()
+        channel.stop()
+        global prevx, slist, shuffle
+        if shuffle:
+            temp2 = slist[prevx[-1]]
+            previous_one = songsList.index(prevx[-1])
+            if len(prevx)!=1:
+                prevx.pop()
+        else:
+            previous_one=songsList.curselection()
+            previous_one=previous_one[0]-1
+            if previous_one < 0:
+                previous_one = len(slist)-1
+            temp2=songsList.get(previous_one)
+        global state, desc
+        state = "Listening"
+        desc = temp2
+        temp2=f'Osu\\{temp2}.mp3'
+        song = mixer.Sound(temp2)
+        channel.play(song)
+        songsList.selection_clear(0,END)
+        songsList.see(previous_one)
+        songsList.activate(previous_one)
+        songsList.selection_set(previous_one)
+        nowplaying.set(f"{state}: {desc}")
+    except:
+        print("[ERROR]", "Can't play previous song")
 
 #play next song
 def Next():
-    channel.pause()
-    channel.stop()
-    global x, shuffle, prevx, slist
-    if shuffle:
-        prevx.append(slist.index(songsList.get(ACTIVE)))
-        x = randint(0, len(slist)-1)
-        temp = slist[x]
-        next_one = songsList.index(x)
-    else:
-        next_one=songsList.curselection()
-        next_one=next_one[0]+1
-        if next_one > len(slist)-1:
-            next_one=0
-        temp=songsList.get(next_one) 
-    global state, desc
-    state = "Listening"
-    desc = temp
-    temp=f'Osu\\{temp}.mp3'
-    song = mixer.Sound(temp)
-    channel.play(song)
-    songsList.selection_clear(0,END)
-    songsList.see(next_one)
-    songsList.activate(next_one)
-    songsList.selection_set(next_one)
-    nowplaying.set(f"{state}: {desc}")
+    try:
+        channel.pause()
+        channel.stop()
+        global x, shuffle, prevx, slist
+        if shuffle:
+            prevx.append(slist.index(songsList.get(ACTIVE)))
+            x = randint(0, len(slist)-1)
+            temp = slist[x]
+            next_one = songsList.index(x)
+        else:
+            next_one=songsList.curselection()
+            next_one=next_one[0]+1
+            if next_one > len(slist)-1:
+                next_one=0
+            temp=songsList.get(next_one) 
+        global state, desc
+        state = "Listening"
+        desc = temp
+        temp=f'Osu\\{temp}.mp3'
+        song = mixer.Sound(temp)
+        channel.play(song)
+        songsList.selection_clear(0,END)
+        songsList.see(next_one)
+        songsList.activate(next_one)
+        songsList.selection_set(next_one)
+        nowplaying.set(f"{state}: {desc}")
+    except:
+        print("[ERROR]","Can't play next song")
+
 
 #toggle loop
 loop = True
@@ -307,8 +317,8 @@ def searchToggle():
         searchBar.grid_remove()
         searchTxt.grid_remove()
     elif searchBarToggle.get() == 1:
-        searchTxt.grid(row=3, column=0)
-        searchBar.grid(row=3, column=1, columnspan=7, pady=5)
+        searchTxt.grid(row=4, column=0)
+        searchBar.grid(row=4, column=1, columnspan=7, pady=5)
         searchBar.focus_set()
 
 #search function to search songs in the app
@@ -573,80 +583,83 @@ songsList.config(bg="gray15", fg="white", selectbackground="gray", selectforegro
 songsList.grid(columnspan=8)
 songsList.bind("<Double-Button-1>", playSelected)
 
+separator = Separator(root, orient=HORIZONTAL)
+separator.grid(row=1, column=0, columnspan=8, sticky="ew")
+
 nowplaying=StringVar()
 nowplaying.set(f"{state}")
 playingLabel=Label(root,textvariable=nowplaying,width=60)
 playingLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
-playingLabel.grid(row=1, column=0, columnspan=6, pady=5)
+playingLabel.grid(row=2, column=0, columnspan=6, pady=5)
 
 playImage = PhotoImage(file="icon/play_button.png")
 playButton=Button(root, image=playImage, command=Play)
 playButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-playButton.grid(row=2,column=0, padx=5)
+playButton.grid(row=3,column=0, padx=5)
 
 pauseImage = PhotoImage(file="icon/pause_button.png")
 pauseButton=Button(root, image=pauseImage, command=Pause)
 pauseButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-pauseButton.grid(row=2,column=1, padx=5)
+pauseButton.grid(row=3,column=1, padx=5)
 
 stopImage = PhotoImage(file="icon/stop_button.png")
 stopButton=Button(root, image=stopImage, command=Stop)
 stopButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-stopButton.grid(row=2,column=2, padx=5)
+stopButton.grid(row=3,column=2, padx=5)
 
 previousImage = PhotoImage(file="icon/previous_button.png")
 previousButton=Button(root, image=previousImage, command=Previous)
 previousButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-previousButton.grid(row=2,column=3, padx=5)
+previousButton.grid(row=3,column=3, padx=5)
 
 nextImage = PhotoImage(file="icon/next_button.png")
 nextButton=Button(root, image=nextImage, command=Next)
 nextButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-nextButton.grid(row=2,column=4, padx=5)
+nextButton.grid(row=3,column=4, padx=5)
 
 loopImage = PhotoImage(file="icon/loop_button.png")
 loopButton=Button(root, image=loopImage, command=Loop)
 loopButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-loopButton.grid(row=2,column=5, padx=5)
+loopButton.grid(row=3,column=5, padx=5)
 loopButton.grid_remove()
 notLoopImage = PhotoImage(file="icon/not_loop_button.png")
 notLoopButton=Button(root, image=notLoopImage, command=Loop)
 notLoopButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-notLoopButton.grid(row=2,column=5, padx=5)
+notLoopButton.grid(row=3,column=5, padx=5)
 notLoopButton.grid_remove()
 loop2Image = PhotoImage(file="icon/loop2_button.png")
 loop2Button=Button(root, image=loop2Image, command=Loop)
 loop2Button.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-loop2Button.grid(row=2,column=5, padx=5)
+loop2Button.grid(row=3,column=5, padx=5)
 loop2Button.grid_remove()
 
 shuffleImage = PhotoImage(file="icon/shuffle_button.png")
 shuffleButton=Button(root, image=shuffleImage, command=Shuffle)
 shuffleButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-shuffleButton.grid(row=2,column=6, padx=5)
+shuffleButton.grid(row=3,column=6, padx=5)
 notShuffleImage = PhotoImage(file="icon/not_shuffle_button.png")
 notShuffleButton = Button(root, image=notShuffleImage, command=Shuffle)
 notShuffleButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-notShuffleButton.grid(row=2,column=6, padx=5)
+notShuffleButton.grid(row=3,column=6, padx=5)
 notShuffleButton.grid_remove()
 
 kcImage = PhotoImage(file="icon/keyboard_button.png")
 kc = Button(root, image=kcImage, command=kcstate)
 kc.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-kc.grid(row=2,column=7, padx=5)
+kc.grid(row=3,column=7, padx=5)
 notKcImage = PhotoImage(file="icon/not_keyboard_button.png")
 notKc = Button(root, image=notKcImage, command=kcstate)
 notKc.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-notKc.grid(row=2,column=7, padx=5)
+notKc.grid(row=3,column=7, padx=5)
 notKc.grid_remove()
 
 voltxt = Label(root, bg="gray15", fg="white", text="Volume:")
 voltxt.config(font=('arial',12),bd=0,highlightthickness=0)
-voltxt.grid(row=1, column=6, pady=5)
+voltxt.grid(row=2, column=6, pady=5)
 
 volume = Scale(root, from_=0, to=100, orient=HORIZONTAL, variable=IntVar)
 volume.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
-volume.grid(row=1, column=7, pady=5)
+volume.grid(row=2, column=7, pady=5)
 volume.set(100)
 
 searchTxt = Label(root, text="Search:")

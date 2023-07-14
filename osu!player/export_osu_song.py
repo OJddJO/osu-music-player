@@ -7,6 +7,14 @@ from thefuzz import fuzz
 user = os.getlogin()
 
 def export():
+
+    #delete sample song
+    try:
+        os.remove("Osu\\sample.mp3")
+        print("[INFO]", "Deleted sample.mp3")
+    except:
+        pass
+
     titles = []
     blacklist = ["<", ">", ":", "\"", "/", "\\", "|", "*", "?"]
 
@@ -76,7 +84,6 @@ def export():
                         i = tmp2.find("AudioFilename:")
                         i2 = tmp2.find("\n", i)
                         fname = tmp2[i+15:i2]
-                        print(fname)
                     else:
                         pass
 
@@ -110,7 +117,7 @@ def export():
                     except Exception as e:
                         print("[WARNING]",e)
 
-                    print(str(count)+"/"+str(len(titles)-1) + ':' + titles[count] + '        ' + songdir)
+                    print("[Importing Songs]", str(count)+"/"+str(len(titles)-1) + ':' + titles[count] + '        ' + songdir)
                     count += 1   
 
 
