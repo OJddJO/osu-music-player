@@ -1,3 +1,4 @@
+print("[INIT]", "Importing modules...")
 from tkinter import *
 from tkinter import filedialog
 from tkinter.ttk import Separator
@@ -12,6 +13,7 @@ import threading
 import keyboard
 import requests
 import webbrowser
+print("[INIT]", "Importing modules... Done !")
 
 user = os.getlogin()
 
