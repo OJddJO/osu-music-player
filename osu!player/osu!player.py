@@ -586,6 +586,10 @@ def downloadNewSongs():
     wait = True
     root.title("osu!player - Downloading songs")
     osu_song_downloader.Downloader().run()
+    try:
+        os.rmdir("temp")
+    except:
+        print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't delete temp folder")
     importSongs()
     root.title("osu!player")
     wait = False
