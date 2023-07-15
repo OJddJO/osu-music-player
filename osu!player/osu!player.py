@@ -9,6 +9,7 @@ from random import randint
 import os
 import os.path
 import export_osu_song
+import osu_song_downloader
 import threading
 import keyboard
 import requests
@@ -112,7 +113,7 @@ def testPlaying():
         inactiveTicks = 0
 
 #import all songs, previously imported songs will not be re-checked -> import.data
-def importSongs(reimport = False):
+def importSongs():
     global slist
     print("[INFO]", "Importing songs...")
     slist = []
@@ -567,6 +568,15 @@ def deletePlaylist():
             playlistName = element.replace(".txt", "")
             playlistListbox.insert(END, playlistName)
 
+wait = False
+def downloadNewSongs():
+    global wait
+    wait = True
+    root.title("osu!player - Downloading songs")
+    osu_song_downloader.Downloader().run()
+    importSongs()
+    root.title("osu!player")
+    wait = False
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -683,6 +693,8 @@ songMenu.add_command(label="Re-import all songs", command=reimportall)
 songMenu.add_command(label="Delete song",command=deletesong)
 songMenu.add_separator()
 songMenu.add_command(label="Select osu! songs directory", command=getPath)
+songMenu.add_separator()
+songMenu.add_command(label="Download new songs", command=downloadNewSongs)
 
 playlistMenu = Menu(menuBar)
 menuBar.add_cascade(label="Playlist", menu=playlistMenu)
@@ -777,9 +789,10 @@ testVersion(launch=True)
 
 #mainloop
 while run:
-    root.update()
-    testPlaying()
-    changeVol()
-    kinput()
+    if not wait:
+        root.update()
+        testPlaying()
+        changeVol()
+        kinput()
 
 quit()
