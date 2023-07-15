@@ -383,6 +383,7 @@ def testVersion(launch=False):
     if version != latestVersion:
         update = True
         if launch:
+            print(f"{bc.WARNING}[WARNING]{bc.ENDC}", "Update available !")
             versionWin(update)
     if not launch:
         versionWin(update)
