@@ -12,10 +12,11 @@ class Downloader:
         self.app = QApplication([])
 
         self.view = QWebEngineView()
+        
+        if not exists("temp"):
+            mkdir("temp")
 
         def _downloadRequested(item):
-            if not exists("temp"):
-                mkdir("temp")
             print("[DOWNLOAD] Download Started:", item.url().toString())
             item.setDownloadDirectory("temp")
             item.accept()
