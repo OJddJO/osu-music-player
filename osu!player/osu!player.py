@@ -1,4 +1,15 @@
-print("[INIT]", "Importing modules...")
+class bc:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+print(f"{bc.OKBLUE}[INIT]{bc.ENDC}", "Importing modules...")
 from tkinter import *
 from tkinter import filedialog
 from tkinter.ttk import Separator
@@ -14,7 +25,7 @@ import threading
 import keyboard
 import requests
 import webbrowser
-print("[INIT]", "Importing modules... Done !")
+print(f"{bc.OKBLUE}[INIT]{bc.ENDC}", "Importing modules... Done !")
 
 user = os.getlogin()
 
@@ -28,9 +39,9 @@ clientid = '980519752025931836'
 try:
     RPC = Presence(clientid)
     RPC.connect()
-    print("[INFO]", "Discord RPC is ready !")
+    print(f"{bc.OKBLUE}[INIT]{bc.ENDC}", "Discord RPC is ready !")
 except:
-    print("[INFO]", "Discord not found .")
+    print(f"{bc.OKBLUE}[INIT]{bc.ENDC}", "Discord not found .")
 
 
 #function
@@ -115,7 +126,7 @@ def testPlaying():
 #import all songs, previously imported songs will not be re-checked -> import.data
 def importSongs():
     global slist
-    print("[INFO]", "Importing songs...")
+    print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Importing songs...")
     slist = []
     songsList.delete(0, END)
     temp_song=export_osu_song.export()
@@ -124,7 +135,7 @@ def importSongs():
         s=s.replace("Osu/","").replace(".mp3","")
         songsList.insert(END,s)
         slist.append(s)
-    print("[INFO]", f"Imported {len(slist)} songs !")
+    print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", f"Imported {len(slist)} songs !")
 
 #delete and reimport all songs from osu!
 def reimportall():
@@ -223,7 +234,7 @@ def Previous():
         songsList.selection_set(previous_one)
         nowplaying.set(f"{state}: {desc}")
     except:
-        print("[ERROR]", "Can't play previous song")
+        print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't play previous song")
 
 #play next song
 def Next():
@@ -254,7 +265,7 @@ def Next():
         songsList.selection_set(next_one)
         nowplaying.set(f"{state}: {desc}")
     except:
-        print("[ERROR]","Can't play next song")
+        print(f"{bc.FAIL}[ERROR]{bc.ENDC}","Can't play next song")
 
 
 #toggle loop
@@ -407,7 +418,7 @@ def createPlaylist():
     try:
         os.listdir("playlists")
     except:
-        print("[INFO]", "Creating playlists directory")
+        print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Creating playlists directory")
         os.mkdir("playlists")
 
     playlistWin = Toplevel(root)
@@ -463,7 +474,7 @@ def importPlaylist():
                 slist.append(element)
             playlistWin.destroy()
         except:
-            print("[ERROR]", "Can't import playlist")
+            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't import playlist")
 
     def changePlaylistName():
         try:
@@ -521,7 +532,7 @@ def deletePlaylist():
             os.remove(f"playlists\\{playlistPath[i]}")
             playlistWin.destroy()
         except:
-            print("[ERROR]", "Can't delete playlist")
+            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't delete playlist")
 
     def changePlaylistName():
         try:
@@ -722,7 +733,7 @@ try:
         "kcontrol": eval(open("data/kcontrol.sav").read())
     }
 except:
-    print("[INFO]", "No saved data found, creating new one")
+    print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "No saved data found, creating new one")
     os.makedirs("data")
     savedData = {
         "volume": "100",
@@ -770,7 +781,7 @@ try:
     if not os.path.exists(path):
         getPath()
 except:
-    print("[INFO]", "Osu! folder not found, asking user")
+    print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Osu! folder not found, asking user")
     getPath()
 
 importSongs()

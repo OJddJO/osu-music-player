@@ -1,3 +1,14 @@
+class bc:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWebEngineWidgets import *
 from PyQt5.QtCore import QUrl
@@ -24,7 +35,7 @@ class Downloader:
             try:
                 item.finished.connect(lambda: _downloadFinished(item))
             except Exception as e:
-                print("[ERROR]", e)
+                print(f"{bc.FAIL}[ERROR]{bc.ENDC}", e)
 
         def _downloadFinished(item):
             print("[DOWNLOAD] Download Finished:", item.url().toString())
@@ -46,9 +57,9 @@ class Downloader:
         import zipfile
 
         if len(os.listdir("temp")) == 0:
-            print("[INFO] No files to extract")
+            print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "No files to extract")
         else:
-            print("[INFO] Extracting files...")
+            print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Extracting files...")
             for file in os.listdir("temp"):
                 try:
                     #change extension to .zip
@@ -62,8 +73,8 @@ class Downloader:
                     #delete .zip
                     os.remove(src)
                 except Exception as e:
-                    print("[ERROR]", "Failed to extraxt", file, ":", e)
-            print("[INFO] Done extracting files")
+                    print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Failed to extraxt", file, ":", e)
+            print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Done extracting files")
 
 if __name__ == '__main__':
     downloader = Downloader()
