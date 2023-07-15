@@ -76,7 +76,7 @@ class Downloader:
                     print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Failed to extraxt", file, ":", e)
                     os.remove(src)
                 finally:
-                    print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Failed to delete", src, ":", e)
+                    print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Failed to delete", src)
             print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Done extracting files")
 
 if __name__ == '__main__':
