@@ -135,7 +135,7 @@ def importSongs():
         s=s.replace("Osu/","").replace(".mp3","")
         songsList.insert(END,s)
         slist.append(s)
-    print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", f"Imported {len(slist)} songs !")
+    print(f"{bc.OKGREEN}[INFO]{bc.ENDC}", f"Imported {len(slist)} songs !")
 
 #delete and reimport all songs from osu!
 def reimportall():
@@ -734,7 +734,7 @@ try:
         "kcontrol": eval(open("data/kcontrol.sav").read())
     }
 except:
-    print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "No saved data found, creating new one")
+    print(f"{bc.OKBLUE}[INFO]{bc.ENDC}", "No saved data found, creating new one")
     os.makedirs("data")
     savedData = {
         "volume": "100",
@@ -782,7 +782,7 @@ try:
     if not os.path.exists(path):
         getPath()
 except:
-    print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Osu! folder not found, asking user")
+    print(f"{bc.OKBLUE}[INFO]{bc.ENDC}", "Osu! folder not found, asking user")
     getPath()
 
 importSongs()

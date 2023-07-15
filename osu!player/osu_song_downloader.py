@@ -28,7 +28,7 @@ class Downloader:
             mkdir("temp")
 
         def _downloadRequested(item):
-            print("[DOWNLOAD] Download Started:", item.url().toString())
+            print(f"{bc.OKCYAN}[DOWNLOAD]{bc.ENDC} Download Started:", item.url().toString())
             item.setDownloadDirectory("temp")
             item.accept()
 
@@ -38,7 +38,7 @@ class Downloader:
                 print(f"{bc.FAIL}[ERROR]{bc.ENDC}", e)
 
         def _downloadFinished(item):
-            print("[DOWNLOAD] Download Finished:", item.url().toString())
+            print(f"{bc.OKGREEN}[DOWNLOAD]{bc.ENDC} Download Finished:", item.url().toString())
 
         self.view.page().profile().downloadRequested.connect(_downloadRequested)
 

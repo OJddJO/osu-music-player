@@ -128,7 +128,7 @@ def export():
                     except Exception as e:
                         print(f"{bc.WARNING}[WARNING]{bc.ENDC}",e)
 
-                    print("[Importing Songs]", str(count)+"/"+str(len(titles)-1) + ':' + titles[count] + '        ' + songdir)
+                    print(f"{bc.OKCYAN}[Importing Songs]{bc.ENDC}", str(count)+"/"+str(len(titles)-1) + ':' + titles[count] + '        ' + songdir)
                     count += 1   
 
 
