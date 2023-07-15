@@ -75,7 +75,7 @@ class Downloader:
                 except Exception as e:
                     print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Failed to extraxt", file, ":", e)
                     os.remove(src)
-                except Exception as e:
+                finally:
                     print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Failed to delete", src, ":", e)
             print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Done extracting files")
 
