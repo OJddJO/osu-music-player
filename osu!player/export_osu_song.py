@@ -1,3 +1,14 @@
+class bc:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 import os
 import eyed3
 import shutil
@@ -11,7 +22,7 @@ def export():
     #delete sample song
     try:
         os.remove("Osu\\sample.mp3")
-        print("[INFO]", "Deleted sample.mp3")
+        print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Deleted sample.mp3")
     except:
         pass
 
@@ -61,7 +72,7 @@ def export():
                 titles.append(title)
                 files2.append(dirname)
             except Exception as e:
-                print("[ERROR]",e)
+                print(f"{bc.FAIL}[ERROR]{bc.ENDC}",e)
 
 
     open('import.data', 'w').write(str(test))
@@ -115,7 +126,7 @@ def export():
                     try:
                         song.tag.save()
                     except Exception as e:
-                        print("[WARNING]",e)
+                        print(f"{bc.WARNING}[WARNING]{bc.ENDC}",e)
 
                     print("[Importing Songs]", str(count)+"/"+str(len(titles)-1) + ':' + titles[count] + '        ' + songdir)
                     count += 1   
