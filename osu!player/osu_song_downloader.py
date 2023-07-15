@@ -50,16 +50,19 @@ class Downloader:
         else:
             print("[INFO] Extracting files...")
             for file in os.listdir("temp"):
-                #change extension to .zip
-                src = f"temp/{file.replace('.osz', '.zip')}"
-                os.rename(f"temp/{file}", src)
-                #extract
-                path = open("path.data").read()
-                dest = f"{path}/{file.replace('.osz', '')}"
-                os.mkdir(dest)
-                zipfile.ZipFile(src).extractall(dest)
-                #delete .zip
-                os.remove(src)
+                try:
+                    #change extension to .zip
+                    src = f"temp/{file.replace('.osz', '.zip')}"
+                    os.rename(f"temp/{file}", src)
+                    #extract
+                    path = open("path.data").read()
+                    dest = f"{path}/{file.replace('.osz', '')}"
+                    os.mkdir(dest)
+                    zipfile.ZipFile(src).extractall(dest)
+                    #delete .zip
+                    os.remove(src)
+                except Exception as e:
+                    print("[ERROR]", "Failed to extraxt", file, ":", e)
             print("[INFO] Done extracting files")
 
 if __name__ == '__main__':
