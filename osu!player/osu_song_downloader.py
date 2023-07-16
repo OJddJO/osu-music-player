@@ -34,7 +34,7 @@ class Downloader:
                 title="osu!player - Song downloader",
                 message=f"Download Started: {item.url().toString()}",
                 app_icon="osu-icon-28.ico",
-                timeout=5
+                timeout=2
             )
             item.setDownloadDirectory("temp")
             item.accept()
@@ -50,7 +50,7 @@ class Downloader:
                 title="osu!player - Song downloader",
                 message=f"Download Finished: {item.url().toString()}",
                 app_icon="osu-icon-28.ico",
-                timeout=5
+                timeout=2
             )
 
         self.view.page().profile().downloadRequested.connect(_downloadRequested)
@@ -85,6 +85,7 @@ class Downloader:
                     zipfile.ZipFile(src).extractall(dest)
                     #delete .zip
                     os.remove(src)
+                    print(f"{bc.OKGREEN}[INFO]{bc.ENDC}", "Extracted", file)
                 except Exception as e:
                     print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Failed to extraxt", file, ":", e)
                     try:
