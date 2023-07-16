@@ -583,7 +583,14 @@ def deletePlaylist():
 wait = False
 def downloadNewSongs():
     global wait
+
+    #disable tk window
     wait = True
+    menuBar.entryconfig(1, state=DISABLED)
+    menuBar.entryconfig(2, state=DISABLED)
+    menuBar.entryconfig(3, state=DISABLED)
+    menuBar.entryconfig(4, state=DISABLED)
+
     root.title("osu!player - Downloading songs")
     osu_song_downloader.Downloader().run()
     try:
@@ -592,6 +599,12 @@ def downloadNewSongs():
         print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't delete temp folder")
     importSongs()
     root.title("osu!player")
+
+    #enable tk window
+    menuBar.entryconfig(1, state=NORMAL)
+    menuBar.entryconfig(2, state=NORMAL)
+    menuBar.entryconfig(3, state=NORMAL)
+    menuBar.entryconfig(4, state=NORMAL)
     wait = False
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
