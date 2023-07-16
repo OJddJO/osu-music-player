@@ -85,6 +85,7 @@ class Downloader:
                     zipfile.ZipFile(src).extractall(dest)
                     #delete .zip
                     os.remove(src)
+                    print(f"{bc.OKGREEN}[INFO]{bc.ENDC}", "Extracted", file)
                 except Exception as e:
                     print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Failed to extraxt", file, ":", e)
                     try:
