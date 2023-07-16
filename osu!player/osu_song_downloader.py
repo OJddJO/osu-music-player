@@ -34,7 +34,7 @@ class Downloader:
                 title="osu!player - Song downloader",
                 message=f"Download Started: {item.url().toString()}",
                 app_icon="osu-icon-28.ico",
-                timeout=5
+                timeout=3
             )
             item.setDownloadDirectory("temp")
             item.accept()
@@ -50,7 +50,7 @@ class Downloader:
                 title="osu!player - Song downloader",
                 message=f"Download Finished: {item.url().toString()}",
                 app_icon="osu-icon-28.ico",
-                timeout=5
+                timeout=3
             )
 
         self.view.page().profile().downloadRequested.connect(_downloadRequested)
