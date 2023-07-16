@@ -15,6 +15,7 @@ from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QIcon
 from os.path import exists
 from os import mkdir
+from plyer import notification
 
 class Downloader:
 
@@ -29,6 +30,12 @@ class Downloader:
 
         def _downloadRequested(item):
             print(f"{bc.OKCYAN}[DOWNLOAD]{bc.ENDC} Download Started:", item.url().toString())
+            notification.notify(
+                title="osu!player - Song downloader",
+                message=f"Download Started: {item.url().toString()}",
+                app_icon="osu-icon-28.ico",
+                timeout=5
+            )
             item.setDownloadDirectory("temp")
             item.accept()
 
@@ -39,6 +46,12 @@ class Downloader:
 
         def _downloadFinished(item):
             print(f"{bc.OKGREEN}[DOWNLOAD]{bc.ENDC} Download Finished:", item.url().toString())
+            notification.notify(
+                title="osu!player - Song downloader",
+                message=f"Download Finished: {item.url().toString()}",
+                app_icon="osu-icon-28.ico",
+                timeout=5
+            )
 
         self.view.page().profile().downloadRequested.connect(_downloadRequested)
 
@@ -79,6 +92,7 @@ class Downloader:
                     except Exception as e:
                         print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Failed to delete", src, ":", e)
             print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Done extracting files")
+
 
 if __name__ == '__main__':
     downloader = Downloader()
