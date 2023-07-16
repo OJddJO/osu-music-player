@@ -93,6 +93,7 @@ class Downloader:
                         print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Failed to delete", src, ":", e)
             print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Done extracting files")
 
+
 if __name__ == '__main__':
     downloader = Downloader()
     downloader.run()
