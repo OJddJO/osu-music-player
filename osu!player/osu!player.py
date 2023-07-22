@@ -344,9 +344,10 @@ def search(searchValue):
             songsList.insert(END, element)
 
 #window for updates info
+latestVersion = None
 def versionWin(update):
     def updateApp():
-        webbrowser.open("https://github.com/OJddJO/osu-music-player.exe/releases/latest/")
+        webbrowser.open(f"https://github.com/OJddJO/osu-music-player.exe/releases/download/{latestVersion}/osu.player_setup.exe")
         vWin.destroy()
 
     vWin = Toplevel(root)
@@ -377,7 +378,7 @@ def versionWin(update):
 #check version, if not latest open "versionWin" window
 update = False
 def testVersion(launch=False):
-    global update
+    global update, latestVersion
     version = open("version.lock").read()
     latestVersion = requests.get("https://api.github.com/repos/OJddJO/osu-music-player.exe/releases/latest").json()["tag_name"]
     if version != latestVersion:
