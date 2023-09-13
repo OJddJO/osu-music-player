@@ -554,8 +554,9 @@ class Player(Tk()):
         try:
             os.listdir("playlists")
         except:
-            print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Creating playlists directory")
+            print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Creating playlists directory...", end=" ")
             os.mkdir("playlists")
+            print("Done !")
 
         pWin = Toplevel(self)
         pWin.iconbitmap("osu-icon-28.ico")
@@ -592,6 +593,165 @@ class Player(Tk()):
             s=s.replace("Osu/","").replace(".mp3","")
             songsList.insert(END,s)
             self.slist.append(s)
+
+
+    def importPlaylist(self):
+        def usePlaylist():
+            slistCopy = self.slist.copy()
+            self.slist = []
+            i = playlistListbox.curselection()[0]
+            playlistNameVar.set(playlistPath[i])
+            songs = eval(open(f"playlists/{playlistPath[i]}").read())
+            try:
+                for song in songs:
+                    self.slist.append(song)
+                    self.songsList.insert(END, song)
+            except:
+                try:
+                    for song in songs:
+                        if song in slistCopy:
+                            self.slist.append(song)
+                            self.songsList.insert(END, song)
+                        else:
+                            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", f"{song} not found !")
+                            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Removing it from the playlist...", end=" ")
+                            songs.remove(song)
+                            print("Done !")
+                except:
+                    print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't import playlist !")
+            #save playlist
+            open(f"playlists/{playlistPath[i]}", 'w').write(str(songs))
+
+        def changePlaylistName():
+            try:
+                i = playlistListbox.curselection()[0]
+                playlistNameVar.set(playlistPath[i])
+            except:
+                pass
+
+        def shutdown():
+            playlistWin.destroy()
+            
+        playlistWin = Toplevel(self)
+        playlistWin.iconbitmap("osu-icon-28.ico")
+        playlistWin.config(bg="gray15")
+        playlistWin.title("Import a playlist")
+        playlistWin.resizable(False, False)
+        playlistWin.protocol("WM_DELETE_WINDOW", shutdown)
+
+        playlistListbox = Listbox(playlistWin, selectmode=SINGLE, height=14, width=50)
+        playlistListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+        playlistListbox.grid(columnspan=8)
+        playlistListbox.bind("<Double-Button-1>", lambda args, usePlaylist=usePlaylist: usePlaylist())
+        playlistListbox.bind("<Button-1>", lambda args, changePlaylistName=changePlaylistName: changePlaylistName())
+
+        playlistLabel = Label(playlistWin, text="Selected:")
+        playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+        playlistLabel.grid(row=1, column=0, pady=5)
+
+        playlistNameVar = StringVar()
+        playlistNameVar.set("")
+        playlistNameLabel = Label(playlistWin, textvariable=playlistNameVar, width=40, justify='center')
+        playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
+        playlistNameLabel.grid(row=1, column=1, columnspan=5, pady=5)
+
+        useButton = Button(playlistWin, text="Select", command=usePlaylist)
+        useButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        useButton.grid(row=1, column=6, pady=5)
+
+        cancelButton = Button(playlistWin, text="Cancel", command=shutdown)
+        cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        cancelButton.grid(row=1, column=7, pady=5)
+
+        playlistPath = []
+        for element in os.listdir("playlists"):
+            if element.endswith(".txt"):
+                playlistPath.append(element)
+                playlistName = element.replace(".txt", "")
+                playlistListbox.insert(END, playlistName)
+
+
+    def deletePlaylist(self):
+        def shutdown():
+            playlistWin.destroy()
+
+        def delete():
+            try:
+                i = playlistListbox.curselection()[0]
+                os.remove(f"playlists\\{playlistPath[i]}")
+                playlistWin.destroy()
+            except:
+                print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't delete playlist")
+
+        def changePlaylistName():
+            try:
+                i = playlistListbox.curselection()[0]
+                playlistNameVar.set(playlistPath[i])
+            except:
+                pass
+
+        playlistWin = Toplevel(self)
+        playlistWin.iconbitmap("osu-icon-28.ico")
+        playlistWin.config(bg="gray15")
+        playlistWin.title("Delete a playlist")
+        playlistWin.resizable(False, False)
+        playlistWin.protocol("WM_DELETE_WINDOW", shutdown)
+
+        playlistListbox = Listbox(playlistWin, selectmode=SINGLE, height=14, width=50)
+        playlistListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+        playlistListbox.grid(columnspan=8)
+        playlistListbox.bind("<Double-Button-1>", lambda args, usePlaylist=delete: usePlaylist())
+        playlistListbox.bind("<Button-1>", lambda args, changePlaylistName=changePlaylistName: changePlaylistName())
+
+        playlistLabel = Label(playlistWin, text="Name:")
+        playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+        playlistLabel.grid(row=1, column=0, pady=5)
+
+        playlistNameVar = StringVar()
+        playlistNameVar.set("")
+        playlistNameLabel = Label(playlistWin, textvariable=playlistNameVar, width=40, justify='center')
+        playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
+        playlistNameLabel.grid(row=1, column=1, columnspan=5, pady=5)
+
+        deleteButton = Button(playlistWin, text="Delete", command=delete)
+        deleteButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        deleteButton.grid(row=1, column=6, pady=5)
+
+        cancelButton = Button(playlistWin, text="Cancel", command=shutdown)
+        cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        cancelButton.grid(row=1, column=7, pady=5)
+
+        playlistPath = []
+        for element in os.listdir("playlists"):
+            if element.endswith(".txt"):
+                playlistPath.append(element)
+                playlistName = element.replace(".txt", "")
+                playlistListbox.insert(END, playlistName)
+
+
+    def downloadSongs(self):
+        #disable tk window
+        wait = True
+        self.menuBar.entryconfig(1, state=DISABLED)
+        self.menuBar.entryconfig(2, state=DISABLED)
+        self.menuBar.entryconfig(3, state=DISABLED)
+        self.menuBar.entryconfig(4, state=DISABLED)
+
+        self.title("osu!player - Downloading songs")
+        osu_song_downloader.Downloader().run()
+        try:
+            os.rmdir("temp")
+        except:
+            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't delete temp folder")
+        self.importSongs()
+        self.title("osu!player")
+
+        #enable tk window
+        self.menuBar.entryconfig(1, state=NORMAL)
+        self.menuBar.entryconfig(2, state=NORMAL)
+        self.menuBar.entryconfig(3, state=NORMAL)
+        self.menuBar.entryconfig(4, state=NORMAL)
+        wait = False
 
 
     def shutdown(self):
