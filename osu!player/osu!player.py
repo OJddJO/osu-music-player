@@ -585,7 +585,13 @@ class Player(Tk()):
         cancelButton = Button(pWin, text="Cancel", command=shutdown)
         cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
         cancelButton.grid(row=1, column=7, pady=5)
-        threading.Thread(target=pWin.mainloop).start()
+
+        temp_song=export_osu_song.export()
+
+        for s in temp_song:
+            s=s.replace("Osu/","").replace(".mp3","")
+            songsList.insert(END,s)
+            self.slist.append(s)
 
 
     def shutdown(self):
