@@ -219,6 +219,15 @@ class Player(Tk()):
         self.testVersion(launch=True)
 
 
+    def run(self):
+        while self.run:
+            if not self.wait:
+                self.update()
+                self.testPlaying()
+                self.changeVol()
+                self.kinput()
+        quit()
+
     def discordPresence(self):
         self.start = time()
         client_id = '980519752025931836'
@@ -593,6 +602,7 @@ class Player(Tk()):
             s=s.replace("Osu/","").replace(".mp3","")
             songsList.insert(END,s)
             self.slist.append(s)
+        threading.Thread(target=pWin.mainloop).start()
 
 
     def importPlaylist(self):
@@ -669,6 +679,7 @@ class Player(Tk()):
                 playlistPath.append(element)
                 playlistName = element.replace(".txt", "")
                 playlistListbox.insert(END, playlistName)
+        threading.Thread(target=playlistWin.mainloop).start()
 
 
     def deletePlaylist(self):
@@ -727,11 +738,16 @@ class Player(Tk()):
                 playlistPath.append(element)
                 playlistName = element.replace(".txt", "")
                 playlistListbox.insert(END, playlistName)
+        threading.Thread(target=playlistWin.mainloop).start()
+
+
+    def playlistAddSong(self):
+        pass
 
 
     def downloadSongs(self):
         #disable tk window
-        wait = True
+        self.wait = True
         self.menuBar.entryconfig(1, state=DISABLED)
         self.menuBar.entryconfig(2, state=DISABLED)
         self.menuBar.entryconfig(3, state=DISABLED)
@@ -751,7 +767,7 @@ class Player(Tk()):
         self.menuBar.entryconfig(2, state=NORMAL)
         self.menuBar.entryconfig(3, state=NORMAL)
         self.menuBar.entryconfig(4, state=NORMAL)
-        wait = False
+        self.wait = False
 
 
     def shutdown(self):
