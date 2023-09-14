@@ -34,9 +34,8 @@ class Player(Tk()):
         #initialise variables
         self.user = os.getlogin()
         self.slist = []
-        self.run = True
+        self.runVar = True
         #discord presence
-        self.discordPresence()
         self.state = "Idle"
         self.desc = "   "
         #init variables for test playing
@@ -208,25 +207,26 @@ class Player(Tk()):
         self.menuBar.add_checkbutton(label="Search bar", variable=self.searchBarToggle, command=self.searchToggle)
         # ----------------------------------------------------------------
 
-        self.importSongs()
         self.discordPresence()
         self.changeStatusThread = threading.Thread(target=self.changeStatus)
-        self.changeStatusThread.start()
         self.update()
         self.iconbitmap("osu-icon-28.ico")
         self.protocol("WM_DELETE_WINDOW", self.shutdown)
-        #auto check update
-        self.testVersion(launch=True)
 
 
     def run(self):
-        while self.run:
+        self.importSongs()
+        #auto check update
+        self.testVersion(launch=True)
+        threading.Thread(target=self.changeStatusThread).start()
+        while self.runVar:
             if not self.wait:
                 self.update()
                 self.testPlaying()
                 self.changeVol()
                 self.kinput()
         quit()
+
 
     def discordPresence(self):
         self.start = time()
@@ -640,36 +640,36 @@ class Player(Tk()):
                 pass
 
         def shutdown():
-            playlistWin.destroy()
+            pWin.destroy()
             
-        playlistWin = Toplevel(self)
-        playlistWin.iconbitmap("osu-icon-28.ico")
-        playlistWin.config(bg="gray15")
-        playlistWin.title("Import a playlist")
-        playlistWin.resizable(False, False)
-        playlistWin.protocol("WM_DELETE_WINDOW", shutdown)
+        pWin = Toplevel(self)
+        pWin.iconbitmap("osu-icon-28.ico")
+        pWin.config(bg="gray15")
+        pWin.title("Import a playlist")
+        pWin.resizable(False, False)
+        pWin.protocol("WM_DELETE_WINDOW", shutdown)
 
-        playlistListbox = Listbox(playlistWin, selectmode=SINGLE, height=14, width=50)
+        playlistListbox = Listbox(pWin, selectmode=SINGLE, height=14, width=50)
         playlistListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
         playlistListbox.grid(columnspan=8)
-        playlistListbox.bind("<Double-Button-1>", lambda args, usePlaylist=usePlaylist: usePlaylist())
-        playlistListbox.bind("<Button-1>", lambda args, changePlaylistName=changePlaylistName: changePlaylistName())
+        playlistListbox.bind("<Double-Button-1>", lambda args: usePlaylist())
+        playlistListbox.bind("<Button-1>", lambda args: changePlaylistName())
 
-        playlistLabel = Label(playlistWin, text="Selected:")
+        playlistLabel = Label(pWin, text="Selected:")
         playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
         playlistLabel.grid(row=1, column=0, pady=5)
 
         playlistNameVar = StringVar()
         playlistNameVar.set("")
-        playlistNameLabel = Label(playlistWin, textvariable=playlistNameVar, width=40, justify='center')
+        playlistNameLabel = Label(pWin, textvariable=playlistNameVar, width=40, justify='center')
         playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
         playlistNameLabel.grid(row=1, column=1, columnspan=5, pady=5)
 
-        useButton = Button(playlistWin, text="Select", command=usePlaylist)
+        useButton = Button(pWin, text="Select", command=usePlaylist)
         useButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
         useButton.grid(row=1, column=6, pady=5)
 
-        cancelButton = Button(playlistWin, text="Cancel", command=shutdown)
+        cancelButton = Button(pWin, text="Cancel", command=shutdown)
         cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
         cancelButton.grid(row=1, column=7, pady=5)
 
@@ -679,18 +679,18 @@ class Player(Tk()):
                 playlistPath.append(element)
                 playlistName = element.replace(".txt", "")
                 playlistListbox.insert(END, playlistName)
-        threading.Thread(target=playlistWin.mainloop).start()
+        threading.Thread(target=pWin.mainloop).start()
 
 
     def deletePlaylist(self):
         def shutdown():
-            playlistWin.destroy()
+            pWin.destroy()
 
         def delete():
             try:
                 i = playlistListbox.curselection()[0]
-                os.remove(f"playlists\\{playlistPath[i]}")
-                playlistWin.destroy()
+                os.remove(f"playlists/{playlistPath[i]}")
+                pWin.destroy()
             except:
                 print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't delete playlist")
 
@@ -701,34 +701,34 @@ class Player(Tk()):
             except:
                 pass
 
-        playlistWin = Toplevel(self)
-        playlistWin.iconbitmap("osu-icon-28.ico")
-        playlistWin.config(bg="gray15")
-        playlistWin.title("Delete a playlist")
-        playlistWin.resizable(False, False)
-        playlistWin.protocol("WM_DELETE_WINDOW", shutdown)
+        pWin = Toplevel(self)
+        pWin.iconbitmap("osu-icon-28.ico")
+        pWin.config(bg="gray15")
+        pWin.title("Delete a playlist")
+        pWin.resizable(False, False)
+        pWin.protocol("WM_DELETE_WINDOW", shutdown)
 
-        playlistListbox = Listbox(playlistWin, selectmode=SINGLE, height=14, width=50)
+        playlistListbox = Listbox(pWin, selectmode=SINGLE, height=14, width=50)
         playlistListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
         playlistListbox.grid(columnspan=8)
-        playlistListbox.bind("<Double-Button-1>", lambda args, usePlaylist=delete: usePlaylist())
-        playlistListbox.bind("<Button-1>", lambda args, changePlaylistName=changePlaylistName: changePlaylistName())
+        playlistListbox.bind("<Double-Button-1>", lambda args: delete())
+        playlistListbox.bind("<Button-1>", lambda args: changePlaylistName())
 
-        playlistLabel = Label(playlistWin, text="Name:")
+        playlistLabel = Label(pWin, text="Name:")
         playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
         playlistLabel.grid(row=1, column=0, pady=5)
 
         playlistNameVar = StringVar()
         playlistNameVar.set("")
-        playlistNameLabel = Label(playlistWin, textvariable=playlistNameVar, width=40, justify='center')
+        playlistNameLabel = Label(pWin, textvariable=playlistNameVar, width=40, justify='center')
         playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
         playlistNameLabel.grid(row=1, column=1, columnspan=5, pady=5)
 
-        deleteButton = Button(playlistWin, text="Delete", command=delete)
+        deleteButton = Button(pWin, text="Delete", command=delete)
         deleteButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
         deleteButton.grid(row=1, column=6, pady=5)
 
-        cancelButton = Button(playlistWin, text="Cancel", command=shutdown)
+        cancelButton = Button(pWin, text="Cancel", command=shutdown)
         cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
         cancelButton.grid(row=1, column=7, pady=5)
 
@@ -738,11 +738,77 @@ class Player(Tk()):
                 playlistPath.append(element)
                 playlistName = element.replace(".txt", "")
                 playlistListbox.insert(END, playlistName)
-        threading.Thread(target=playlistWin.mainloop).start()
+        threading.Thread(target=pWin.mainloop).start()
 
 
     def playlistAddSong(self):
-        pass
+        def shutdown():
+            pWin.destroy()
+
+        def addSong():
+            try:
+                i = playlistListbox.curselection()[0]
+                songs = eval(open(f"playlists/{playlistPath[i]}").read())
+                for songs in songListbox.curselection():
+                    songs.append(slist[songs])
+                open(f"playlists/{playlistPath[i]}", 'w').write(str(songs))
+                pWin.destroy()
+            except:
+                print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't add song")
+
+        def changePlaylistName():
+            try:
+                i = playlistListbox.curselection()[0]
+                playlistNameVar.set(playlistPath[i])
+            except:
+                pass
+
+        pWin = Toplevel(self)
+        pWin.iconbitmap("osu-icon-28.ico")
+        pWin.config(bg="gray15")
+        pWin.title("Delete a playlist")
+        pWin.resizable(False, False)
+        pWin.protocol("WM_DELETE_WINDOW", shutdown)
+
+        playlistListbox = Listbox(pWin, selectmode=SINGLE, height=4, width=50)
+        playlistListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+        playlistListbox.grid(columnspan=8, row=0, column=0)
+        playlistListbox.bind("<Button-1>", changePlaylistName)
+
+        self.importSongs()
+        songListbox = Listbox(pWin, selectmode=MULTIPLE, height=10, width=50)
+        songListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+        songListbox.grid(columnspan=8, row=1, column=0)
+        slist = self.slist.copy()
+        for song in slist:
+            songListbox.insert(END, song)
+        
+        playlistLabel = Label(pWin, text="Name:")
+        playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+        playlistLabel.grid(row=2, column=0, pady=5)
+
+        playlistNameVar = StringVar()
+        playlistNameVar.set("")
+        playlistNameLabel = Label(pWin, textvariable=playlistNameVar, width=40, justify='center')
+        playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
+        playlistNameLabel.grid(row=2, column=1, columnspan=5, pady=5)
+
+        addButton = Button(pWin, text="Add", command=addSong)
+        addButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        addButton.grid(row=2, column=6, pady=5)
+
+        cancelButton = Button(pWin, text="Cancel", command=shutdown)
+        cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        cancelButton.grid(row=2, column=7, pady=5)
+
+        playlistPath = []
+        for element in os.listdir("playlists"):
+            if element.endswith(".txt"):
+                playlistPath.append(element)
+                playlistName = element.replace(".txt", "")
+                playlistListbox.insert(END, playlistName)
+
+        threading.Thread(target=pWin.mainloop).start()
 
 
     def downloadSongs(self):
@@ -778,3 +844,8 @@ class Player(Tk()):
         open("data/kcontrol.sav", 'w').write(str(self.useKeyboard))
         self.run = False
         self.quit()
+
+
+if __name__ == "__main__":
+    app = Player()
+    app.run()
