@@ -27,7 +27,7 @@ import requests
 import webbrowser
 print(f"{bc.OKBLUE}[INIT]{bc.ENDC}", "Importing modules... Done !")
 
-class Player(Tk()):
+class Player(Tk):
     def __init__(self):
         super().__init__()
 
@@ -67,10 +67,11 @@ class Player(Tk()):
         self.prevx = []
         self.regVol = 100
         self.wait = False
-        self.volume.set(int(savedData["volume"]))
         self.shuffleVar = savedData["shuffle"]
         self.loopVar = savedData["loop"]
         self.useKeyboard = savedData["useKeyboard"]
+
+        self.songDownloader = osu_song_downloader.Downloader()
 
         #your osu! game directory
         try:
@@ -90,7 +91,7 @@ class Player(Tk()):
         self.resizable(False, False)
         self.config(bg = "gray15")
 
-        self.songsList = Listbox(self, selectmode=SINGLE, hegigth=14, width=70)
+        self.songsList = Listbox(self, selectmode=SINGLE, height=14, width=70)
         self.songsList.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
         self.songsList.grid(columnspan=8)
         self.songsList.bind("<Double-Button-1>", self.playSelected)
@@ -102,7 +103,7 @@ class Player(Tk()):
         self.nowPlaying.set(self.state)
         self.playingLabel = Label(self, textvariable=self.nowPlaying, width=60)
         self.playingLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
-        self.playingLabel.grid(row=2, columnspan=8, pady=5)
+        self.playingLabel.grid(row=2, column=0, columnspan=6, pady=5)
 
         self.playImage = PhotoImage(file="icon/play_button.png")
         self.playButton = Button(self, image=self.playImage, command=self.play)
@@ -170,14 +171,15 @@ class Player(Tk()):
         self.volume = Scale(self, from_=0, to=100, orient=HORIZONTAL, variable=IntVar)
         self.volume.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
         self.volume.grid(row=2, column=7, pady=5)
+        self.volume.set(int(savedData["volume"]))
 
         self.searchTxt = Label(self, text="Search:")
-        self.searchTxt.config(bg="gray15", fg="white", bd=0, highlightthickness=0, font=('arial', 13))
+        self.searchTxt.config(bg="gray15", fg="white", bd=0, highlightthickness=0, font=('arial', 13), pady=5)
         self.searchValue = StringVar()
         self.searchValue.set("")
         self.searchValue.trace_add("write", lambda name, index, mode, sv=self.searchValue: self.search(sv))
         self.searchBar = Entry(self, textvariable=self.searchValue, width=60)
-        self.searchBar.config(bg="gray15", fg="white", bd=0, highlightthickness=0, font=('arial', 13))
+        self.searchBar.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', insertbackground="white", font=('arial', 13))
 
         #menu
         self.menuBar = Menu(self)
@@ -185,19 +187,20 @@ class Player(Tk()):
 
         self.songMenu = Menu(self.menuBar)
         self.menuBar.add_cascade(label="Songs", menu=self.songMenu)
-        self.songMenu.add_command(label="Import songs", command=self.importSongs)
-        self.songMenu.add_command(label="Re-import all songs", command=self.reimportAll)
-        self.songMenu.add_command(label="Delete song", command=self.deleteSong)
+        self.songMenu.add_command(label="Import Songs", command=self.importSongs)
+        self.songMenu.add_command(label="Re-import All Songs", command=self.reimportAll)
+        self.songMenu.add_command(label="Delete Selected Song", command=self.deleteSong)
         self.songMenu.add_separator()
-        self.songMenu.add_command(label="Select osu! songs directory", command=self.getPath)
+        self.songMenu.add_command(label="Select osu! Songs Directory", command=self.getPath)
         self.songMenu.add_separator()
-        self.songMenu.add_command(label="Download new songs", command=self.downloadSongs)
+        self.songMenu.add_command(label="Download New Songs", command=self.downloadSongs)
 
         self.playlistMenu = Menu(self.menuBar)
         self.menuBar.add_cascade(label="Playlist", menu=self.playlistMenu)
-        self.playlistMenu.add_command(label="Create playlist", command=self.createPlaylist)
+        self.playlistMenu.add_command(label="Create Playlist", command=self.createPlaylist)
         self.playlistMenu.add_command(label="Delete playlist", command=self.deletePlaylist)
         self.playlistMenu.add_command(label="Import Playlist", command=self.importPlaylist)
+        self.playlistMenu.add_command(label="Add Song To Playlist", command=self.playlistAddSong)
 
         self.otherMenu = Menu(self.menuBar)
         self.menuBar.add_cascade(label="Other", menu=self.otherMenu)
@@ -218,13 +221,14 @@ class Player(Tk()):
         self.importSongs()
         #auto check update
         self.testVersion(launch=True)
-        threading.Thread(target=self.changeStatusThread).start()
+        self.changeStatusThread.start()
         while self.runVar:
             if not self.wait:
                 self.update()
                 self.testPlaying()
                 self.changeVol()
                 self.kinput()
+        self.quit()
         quit()
 
 
@@ -247,7 +251,7 @@ class Player(Tk()):
     
     def changeStatus(self):
         try:
-            while self.run:
+            while self.runVar:
                 self.RPC.update(
                     large_image="osu-icon-28",
                     large_text="Osu!Player",
@@ -313,7 +317,7 @@ class Player(Tk()):
         self.songsList.delete(0, END)
         tmp =  export_osu_song.export()
         for song in tmp:
-            song = song.eplace("Osu/", "").replace(".mp3", "")
+            song = song.replace("Osu/", "").replace(".mp3", "")
             self.songsList.insert(END, song)
             self.slist.append(song)
         print(f"{bc.OKGREEN}[INFO]{bc.ENDC}", f"Imported {len(self.slist)} songs !")
@@ -334,8 +338,13 @@ class Player(Tk()):
 
 
     def deleteSong(self):
-        curr_song = self.songsList.curselection()
-        self.songsList.delete(curr_song[0])
+        try:
+            curr_song = self.songsList.curselection()
+            self.songsList.delete(curr_song[0])
+            os.remove(f'Osu/{self.slist[curr_song[0]]}.mp3')
+            self.slist.pop(curr_song[0])
+        except:
+            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't delete song !")
 
 
     def playSelected(self, event):
@@ -377,7 +386,7 @@ class Player(Tk()):
         self.songsList.selection_clear(ACTIVE)
         self.state = 'Idle'
         self.desc = '   '
-        self.nowPlaying.set(f"{self.state}: {self.desc}")
+        self.nowPlaying.set(f"{self.state}")
 
 
     def previous(self):
@@ -485,8 +494,8 @@ class Player(Tk()):
 
     def searchToggle(self):
         if self.searchBarToggle.get() == 1:
-            self.searchTxt.grid(row=2, column=0, pady=5)
-            self.searchBar.grid(row=2, column=1, pady=5)
+            self.searchTxt.grid(row=4, column=0)
+            self.searchBar.grid(row=4, column=1, columnspan=7, pady=5)
             self.searchBar.focus_set()
         else:
             self.searchValue.set("")
@@ -528,18 +537,23 @@ class Player(Tk()):
         def shutdown():
             vWin.destroy()
         vWin.protocol("WM_DELETE_WINDOW", shutdown)
-        threading.Thread(target=vWin.mainloop).start()
 
 
     def testVersion(self, launch=False):
         try:
+            appVersion = open("version.lock").read()
             version = requests.get("https://api.github.com/repos/OJddJO/osu-music-player.exe/releases/latest").json()["tag_name"]
-            if version != open("version.txt").read():
-                self.versionWindow(True)
-            else:
-                print(f"{bc.OKBLUE}[INFO]{bc.ENDC}", "You have the latest version !")
-                if launch:
+            if launch:
+                print(f"{bc.OKBLUE}[INFO]{bc.ENDC}", "Checking for updates...")
+                if appVersion != version:
                     print(f"{bc.WARNING}[WARNING]{bc.ENDC}", "Update available !")
+                    self.versionWindow(True)
+                else:
+                    print(f"{bc.OKGREEN}[INFO]{bc.ENDC}", "You have the latest version !")
+            else:
+                if appVersion != version:
+                    self.versionWindow(True)
+                else:
                     self.versionWindow(False)
         except:
             print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't check for updates !")
@@ -548,7 +562,7 @@ class Player(Tk()):
     def createPlaylist(self):
         def create():
             if playlistName.get() != "":
-                songs = self.songsList.curselection()
+                songs = songsList.curselection()
                 songsFile = []
                 for index in songs:
                     songsFile.append(self.slist[index])
@@ -580,21 +594,21 @@ class Player(Tk()):
 
         playlistLabel = Label(pWin, text="Name :")
         playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
-        playlistLabel.grid(row=1, column=0, pady=5)
+        playlistLabel.grid(row=1, column=0)
 
         playlistName = StringVar()
         playlistName.set("")
         playlistNameEntry = Entry(pWin, textvariable=playlistName, width=40, justify='center')
         playlistNameEntry.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-        playlistNameEntry.grid(row=1, column=1, columnspan=5, pady=5)
+        playlistNameEntry.grid(row=1, column=1, columnspan=5)
 
         createButton = Button(pWin, text="Create", command=create)
         createButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-        createButton.grid(row=1, column=6, pady=5)
+        createButton.grid(row=1, column=6)
 
         cancelButton = Button(pWin, text="Cancel", command=shutdown)
         cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-        cancelButton.grid(row=1, column=7, pady=5)
+        cancelButton.grid(row=1, column=7)
 
         temp_song=export_osu_song.export()
 
@@ -602,35 +616,31 @@ class Player(Tk()):
             s=s.replace("Osu/","").replace(".mp3","")
             songsList.insert(END,s)
             self.slist.append(s)
-        threading.Thread(target=pWin.mainloop).start()
 
 
     def importPlaylist(self):
         def usePlaylist():
             slistCopy = self.slist.copy()
             self.slist = []
+            self.songsList.delete(0, END)
             i = playlistListbox.curselection()[0]
             playlistNameVar.set(playlistPath[i])
             songs = eval(open(f"playlists/{playlistPath[i]}").read())
             try:
                 for song in songs:
-                    self.slist.append(song)
-                    self.songsList.insert(END, song)
+                    if song in slistCopy:
+                        self.slist.append(song)
+                        self.songsList.insert(END, song)
+                    else:
+                        print(f"{bc.WARNING}[WARNING]{bc.ENDC}", f"{song} not found !")
+                        print(f"{bc.WARNING}[WARNING]{bc.ENDC}", "Removing it from the playlist...", end=" ")
+                        songs.remove(song)
+                        print("Done !")
             except:
-                try:
-                    for song in songs:
-                        if song in slistCopy:
-                            self.slist.append(song)
-                            self.songsList.insert(END, song)
-                        else:
-                            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", f"{song} not found !")
-                            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Removing it from the playlist...", end=" ")
-                            songs.remove(song)
-                            print("Done !")
-                except:
-                    print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't import playlist !")
+                print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't import playlist !")
             #save playlist
             open(f"playlists/{playlistPath[i]}", 'w').write(str(songs))
+            pWin.destroy()
 
         def changePlaylistName():
             try:
@@ -657,29 +667,31 @@ class Player(Tk()):
 
         playlistLabel = Label(pWin, text="Selected:")
         playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
-        playlistLabel.grid(row=1, column=0, pady=5)
+        playlistLabel.grid(row=1, column=0)
 
         playlistNameVar = StringVar()
         playlistNameVar.set("")
         playlistNameLabel = Label(pWin, textvariable=playlistNameVar, width=40, justify='center')
         playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
-        playlistNameLabel.grid(row=1, column=1, columnspan=5, pady=5)
+        playlistNameLabel.grid(row=1, column=1, columnspan=5)
 
         useButton = Button(pWin, text="Select", command=usePlaylist)
         useButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-        useButton.grid(row=1, column=6, pady=5)
+        useButton.grid(row=1, column=6)
 
         cancelButton = Button(pWin, text="Cancel", command=shutdown)
         cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-        cancelButton.grid(row=1, column=7, pady=5)
+        cancelButton.grid(row=1, column=7)
 
         playlistPath = []
-        for element in os.listdir("playlists"):
-            if element.endswith(".txt"):
-                playlistPath.append(element)
-                playlistName = element.replace(".txt", "")
-                playlistListbox.insert(END, playlistName)
-        threading.Thread(target=pWin.mainloop).start()
+        try:
+            for element in os.listdir("playlists"):
+                if element.endswith(".txt"):
+                    playlistPath.append(element)
+                    playlistName = element.replace(".txt", "")
+                    playlistListbox.insert(END, playlistName)
+        except:
+            print(f"{bc.WARNING}[WARNING]{bc.ENDC}", "No playlist found !")
 
 
     def deletePlaylist(self):
@@ -716,29 +728,31 @@ class Player(Tk()):
 
         playlistLabel = Label(pWin, text="Name:")
         playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
-        playlistLabel.grid(row=1, column=0, pady=5)
+        playlistLabel.grid(row=1, column=0)
 
         playlistNameVar = StringVar()
         playlistNameVar.set("")
         playlistNameLabel = Label(pWin, textvariable=playlistNameVar, width=40, justify='center')
         playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
-        playlistNameLabel.grid(row=1, column=1, columnspan=5, pady=5)
+        playlistNameLabel.grid(row=1, column=1, columnspan=5)
 
         deleteButton = Button(pWin, text="Delete", command=delete)
         deleteButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-        deleteButton.grid(row=1, column=6, pady=5)
+        deleteButton.grid(row=1, column=6)
 
         cancelButton = Button(pWin, text="Cancel", command=shutdown)
         cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-        cancelButton.grid(row=1, column=7, pady=5)
+        cancelButton.grid(row=1, column=7)
 
         playlistPath = []
-        for element in os.listdir("playlists"):
-            if element.endswith(".txt"):
-                playlistPath.append(element)
-                playlistName = element.replace(".txt", "")
-                playlistListbox.insert(END, playlistName)
-        threading.Thread(target=pWin.mainloop).start()
+        try:
+            for element in os.listdir("playlists"):
+                if element.endswith(".txt"):
+                    playlistPath.append(element)
+                    playlistName = element.replace(".txt", "")
+                    playlistListbox.insert(END, playlistName)
+        except:
+            print(f"{bc.WARNING}[WARNING]{bc.ENDC}", "No playlist found !")
 
 
     def playlistAddSong(self):
@@ -747,11 +761,13 @@ class Player(Tk()):
 
         def addSong():
             try:
-                i = playlistListbox.curselection()[0]
-                songs = eval(open(f"playlists/{playlistPath[i]}").read())
+                i = playlistPath.index(playlistNameVar.get())
+                playlist = eval(open(f"playlists/{playlistPath[i]}").read())
                 for songs in songListbox.curselection():
-                    songs.append(slist[songs])
-                open(f"playlists/{playlistPath[i]}", 'w').write(str(songs))
+                    playlist.append(slist[songs])
+                #remove duplicates
+                playlist = list(dict.fromkeys(playlist))
+                open(f"playlists/{playlistPath[i]}", 'w').write(str(playlist))
                 pWin.destroy()
             except:
                 print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't add song")
@@ -773,42 +789,46 @@ class Player(Tk()):
         playlistListbox = Listbox(pWin, selectmode=SINGLE, height=4, width=50)
         playlistListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
         playlistListbox.grid(columnspan=8, row=0, column=0)
-        playlistListbox.bind("<Button-1>", changePlaylistName)
+        playlistListbox.bind("<Button-1>", lambda args: changePlaylistName())
+
+        sep = Separator(pWin, orient=HORIZONTAL)
+        sep.grid(columnspan=8, row=1, column=0, sticky="ew")
 
         self.importSongs()
         songListbox = Listbox(pWin, selectmode=MULTIPLE, height=10, width=50)
         songListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
-        songListbox.grid(columnspan=8, row=1, column=0)
+        songListbox.grid(columnspan=8, row=2, column=0)
         slist = self.slist.copy()
         for song in slist:
             songListbox.insert(END, song)
         
         playlistLabel = Label(pWin, text="Name:")
         playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
-        playlistLabel.grid(row=2, column=0, pady=5)
+        playlistLabel.grid(row=3, column=0)
 
         playlistNameVar = StringVar()
         playlistNameVar.set("")
         playlistNameLabel = Label(pWin, textvariable=playlistNameVar, width=40, justify='center')
         playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
-        playlistNameLabel.grid(row=2, column=1, columnspan=5, pady=5)
+        playlistNameLabel.grid(row=3, column=1, columnspan=5)
 
         addButton = Button(pWin, text="Add", command=addSong)
         addButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-        addButton.grid(row=2, column=6, pady=5)
+        addButton.grid(row=3, column=6)
 
         cancelButton = Button(pWin, text="Cancel", command=shutdown)
         cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-        cancelButton.grid(row=2, column=7, pady=5)
+        cancelButton.grid(row=3, column=7)
 
         playlistPath = []
-        for element in os.listdir("playlists"):
-            if element.endswith(".txt"):
-                playlistPath.append(element)
-                playlistName = element.replace(".txt", "")
-                playlistListbox.insert(END, playlistName)
-
-        threading.Thread(target=pWin.mainloop).start()
+        try:
+            for element in os.listdir("playlists"):
+                if element.endswith(".txt"):
+                    playlistPath.append(element)
+                    playlistName = element.replace(".txt", "")
+                    playlistListbox.insert(END, playlistName)
+        except:
+            print(f"{bc.WARNING}[WARNING]{bc.ENDC}", "No playlist found !")
 
 
     def downloadSongs(self):
@@ -820,7 +840,7 @@ class Player(Tk()):
         self.menuBar.entryconfig(4, state=DISABLED)
 
         self.title("osu!player - Downloading songs")
-        osu_song_downloader.Downloader().run()
+        self.songDownloader.run()
         try:
             os.rmdir("temp")
         except:
@@ -842,8 +862,7 @@ class Player(Tk()):
         open("data/shuffle.sav", 'w').write(str(self.shuffleVar))
         open("data/loop.sav", 'w').write(str(self.loopVar))
         open("data/kcontrol.sav", 'w').write(str(self.useKeyboard))
-        self.run = False
-        self.quit()
+        self.runVar = False
 
 
 if __name__ == "__main__":

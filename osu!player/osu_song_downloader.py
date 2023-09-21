@@ -20,13 +20,9 @@ from plyer import notification
 class Downloader:
 
     def __init__(self):
-
         self.app = QApplication([])
 
         self.view = QWebEngineView()
-        
-        if not exists("temp"):
-            mkdir("temp")
 
         def _downloadRequested(item):
             print(f"{bc.OKCYAN}[DOWNLOAD]{bc.ENDC} Download Started:", item.url().toString())
@@ -55,15 +51,18 @@ class Downloader:
 
         self.view.page().profile().downloadRequested.connect(_downloadRequested)
 
+    def run(self):
+        
+        if not exists("temp"):
+            mkdir("temp")
+
         self.view.load(QUrl("https://osu.ppy.sh/beatmapsets"))
 
         self.view.setWindowTitle("osu!player - Song downloader")
         self.view.setWindowIcon(QIcon('osu-icon-28.ico'))
         self.view.show()
 
-    def run(self):
-
-        self.app.exec_()
+        self.app.exec()
 
         #extract all .osz files
         import os
@@ -94,7 +93,7 @@ class Downloader:
                         print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Failed to delete", src, ":", e)
             print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Done extracting files")
 
-
-if __name__ == '__main__':
-    downloader = Downloader()
-    downloader.run()
+if __name__ == "__main__":
+    app = Downloader()
+    app.run()
+    app.run()
