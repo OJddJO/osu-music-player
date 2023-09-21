@@ -48,7 +48,7 @@ class Player(Tk):
                 "volume": open("data/volume.sav").read(),
                 "shuffle": eval(open("data/shuffle.sav").read()),
                 "loop": eval(open("data/loop.sav").read()),
-                "useKeyboard": eval(open("data/useKeyboard.sav").read())
+                "useKeyboard": eval(open("data/kcontrol.sav").read())
             }
         except:
             print(f"{bc.OKBLUE}[INFO]{bc.ENDC}", "No saved data found, creating new one")
@@ -62,7 +62,7 @@ class Player(Tk):
             open("data/volume.sav", 'w').write("100")
             open("data/shuffle.sav", 'w').write("True")
             open("data/loop.sav", 'w').write("True")
-            open("data/useKeyboard.sav", 'w').write("True")
+            open("data/kcontrol.sav", 'w').write("True")
         self.x = 0
         self.prevx = []
         self.regVol = 100
