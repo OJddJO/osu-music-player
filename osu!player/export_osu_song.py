@@ -32,6 +32,8 @@ def export():
     src = open("path.data").read()
     src = src.replace("user", user).replace("/", "\\")
     dst = r"Osu\\"
+    if not os.path.exists(dst):
+        os.mkdir(dst)
 
     files = os.listdir(src)
 

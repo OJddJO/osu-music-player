@@ -27,801 +27,872 @@ import requests
 import webbrowser
 print(f"{bc.OKBLUE}[INIT]{bc.ENDC}", "Importing modules... Done !")
 
-user = os.getlogin()
+class Player(Tk):
+    def __init__(self):
+        super().__init__()
 
-slist = []
+        #initialise variables
+        self.user = os.getlogin()
+        self.slist = []
+        self.runVar = True
+        #discord presence
+        self.state = "Idle"
+        self.desc = "   "
+        #init variables for test playing
+        self.inactiveTicks = 0
+        self.noSong = False
 
-run = True
+        #load saved data
+        try:
+            loop = "loop"
+            savedData = {
+                "volume": open("data/volume.sav").read(),
+                "shuffle": eval(open("data/shuffle.sav").read()),
+                "loop": eval(open("data/loop.sav").read()),
+                "useKeyboard": eval(open("data/kcontrol.sav").read())
+            }
+        except:
+            print(f"{bc.OKBLUE}[INFO]{bc.ENDC}", "No saved data found, creating new one")
+            os.makedirs("data")
+            savedData = {
+                "volume": "100",
+                "shuffle": True,
+                "loop": True,
+                "useKeyboard": True
+            }
+            open("data/volume.sav", 'w').write("100")
+            open("data/shuffle.sav", 'w').write("True")
+            open("data/loop.sav", 'w').write("True")
+            open("data/kcontrol.sav", 'w').write("True")
+        self.x = 0
+        self.prevx = []
+        self.regVol = 100
+        self.wait = False
+        self.shuffleVar = savedData["shuffle"]
+        self.loopVar = savedData["loop"]
+        self.useKeyboard = savedData["useKeyboard"]
 
-#RPC
-start = time()
-clientid = '980519752025931836'
-try:
-    RPC = Presence(clientid)
-    RPC.connect()
-    print(f"{bc.OKBLUE}[INIT]{bc.ENDC}", "Discord RPC is ready !")
-except:
-    print(f"{bc.OKBLUE}[INIT]{bc.ENDC}", "Discord not found .")
+        self.songDownloader = osu_song_downloader.Downloader()
 
+        #your osu! game directory
+        try:
+            path = open("path.data").read().replace("/", "\\").replace("user", self.user)
+            if not os.path.exists(path):
+                self.getPath()
+        except:
+            print(f"{bc.OKBLUE}[INFO]{bc.ENDC}", "Osu! folder not found, asking user")
+            self.getPath()
 
-#function
-#ask the user for the path of osu! directory
-def getPath():
-    path = filedialog.askdirectory(title="Select your osu! songs directory")
-    if path != "":
-        open("path.data", "w").write(path)
+        #audio init
+        mixer.init()
+        self.channel = mixer.Channel(1)
 
-#update Discord RPC
-state = "Idle"
-desc = "    "
-def changeStatus():
-    global run
-    try:
-        while run:
-            global state, desc
-            RPC.update(
-                large_image="osu-icon-28",
-                large_text="Osu!Player",
-                state=state,
-                details=desc.replace(".mp3", ""),
-                start=start,
-                buttons=[{"label": "Download the app", "url": "https://github.com/OJddJO/osu-music-player.exe"}]
-            )
-    except:
-        pass
+        #tkinter init ----------------------------------------------------
+        self.title("osu!player")
+        self.resizable(False, False)
+        self.config(bg = "gray15")
 
+        self.songsList = Listbox(self, selectmode=SINGLE, height=14, width=70)
+        self.songsList.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+        self.songsList.grid(columnspan=8)
+        self.songsList.bind("<Double-Button-1>", self.playSelected)
+        
+        self.separator = Separator(self, orient=HORIZONTAL)
+        self.separator.grid(row=1, columnspan=8, sticky="ew")
 
-#Keyboard input
-kcontrol = True
-def kinput():
-    if kcontrol:
-        if keyboard.is_pressed('ctrl+alt+space'):
-            global state
-            if state == 'Paused' or state == 'Idle':
-                Play()
-                while keyboard.is_pressed('ctrl+alt+space'):
-                    ''
-            elif state == 'Listening':
-                Pause()
-                while keyboard.is_pressed('ctrl+alt+space'):
-                    ''
-        elif keyboard.is_pressed('ctrl+alt+left'):
-            Previous()
-            while keyboard.is_pressed('ctrl+alt+left'):
-                ''
-        elif keyboard.is_pressed('ctrl+alt+right'):
-            Next()
-            while keyboard.is_pressed('ctrl+alt+right'):
-                ''
-        elif keyboard.is_pressed('ctrl+alt+up'):
-            volume.set(volume.get()+5)
-            while keyboard.is_pressed('ctrl+alt+up'):
-                ''
-        elif keyboard.is_pressed('ctrl+alt+down'):
-            volume.set(volume.get()-5)
-            while keyboard.is_pressed('ctrl+alt+down'):
-                ''
+        self.nowPlaying = StringVar()
+        self.nowPlaying.set(self.state)
+        self.playingLabel = Label(self, textvariable=self.nowPlaying, width=60)
+        self.playingLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
+        self.playingLabel.grid(row=2, column=0, columnspan=6, pady=5)
 
-#check if a song is playing if not Next()
-inactiveTicks = 0
-nosong = False
-def testPlaying():
-    global channel, inactiveTicks, nosong, loop
-    if not channel.get_busy():
-        if loop == True:
-            if state!='Paused' and state!='Idle':
-                inactiveTicks += 1 
-                if inactiveTicks == 1000:
-                    Next()
-        elif loop == "loop":
-            if state!='Paused' and state!='Idle':
-                inactiveTicks += 1 
-                if inactiveTicks == 1000:
-                    Play()
+        self.playImage = PhotoImage(file="icon/play_button.png")
+        self.playButton = Button(self, image=self.playImage, command=self.play)
+        self.playButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+        self.playButton.grid(row=3, column=0, padx=5)
+
+        self.pauseImage = PhotoImage(file="icon/pause_button.png")
+        self.pauseButton = Button(self, image=self.pauseImage, command=self.pause)
+        self.pauseButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+        self.pauseButton.grid(row=3, column=1, padx=5)
+
+        self.stopImage = PhotoImage(file="icon/stop_button.png")
+        self.stopButton = Button(self, image=self.stopImage, command=self.stop)
+        self.stopButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+        self.stopButton.grid(row=3, column=2, padx=5)
+        
+        self.previousImage = PhotoImage(file="icon/previous_button.png")
+        self.previousButton = Button(self, image=self.previousImage, command=self.previous)
+        self.previousButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+        self.previousButton.grid(row=3, column=3, padx=5)
+        
+        self.nextImage = PhotoImage(file="icon/next_button.png")
+        self.nextButton = Button(self, image=self.nextImage, command=self.next)
+        self.nextButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+        self.nextButton.grid(row=3, column=4, padx=5)
+        
+        self.loopImage = PhotoImage(file="icon/loop_button.png")
+        self.loopButton = Button(self, image=self.loopImage, command=self.loop)
+        self.loopButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+        self.loopButton.grid(row=3, column=5, padx=5)
+        self.notLoopImage = PhotoImage(file="icon/not_loop_button.png")
+        self.notLoopButton = Button(self, image=self.notLoopImage, command=self.loop)
+        self.notLoopButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+        self.notLoopButton.grid(row=3, column=5, padx=5)
+        self.notLoopButton.grid_remove()
+        self.loop2Image = PhotoImage(file="icon/loop2_button.png")
+        self.loop2Button = Button(self, image=self.loop2Image, command=self.loop)
+        self.loop2Button.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+        self.loop2Button.grid(row=3, column=5, padx=5)
+        self.loop2Button.grid_remove()
+
+        self.shuffleImage = PhotoImage(file="icon/shuffle_button.png")
+        self.shuffleButton = Button(self, image=self.shuffleImage, command=self.shuffle)
+        self.shuffleButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+        self.shuffleButton.grid(row=3, column=6, padx=5)
+        self.notShuffleImage = PhotoImage(file="icon/not_shuffle_button.png")
+        self.notShuffleButton = Button(self, image=self.notShuffleImage, command=self.shuffle)
+        self.notShuffleButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+        self.notShuffleButton.grid(row=3, column=6, padx=5)
+        self.notShuffleButton.grid_remove()
+
+        self.kcImage = PhotoImage(file="icon/keyboard_button.png")
+        self.kcButton = Button(self, image=self.kcImage, command=self.kc)
+        self.kcButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+        self.kcButton.grid(row=3, column=7, padx=5)
+        self.notKcImage = PhotoImage(file="icon/not_keyboard_button.png")
+        self.notKcButton = Button(self, image=self.notKcImage, command=self.kc)
+        self.notKcButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
+        self.notKcButton.grid(row=3, column=7, padx=5)
+        self.notKcButton.grid_remove()
+
+        self.volTxt = Label(self, text="Volume")
+        self.volTxt.config(bg="gray15", fg="white", bd=0, highlightthickness=0, font=('arial', 13))
+        self.volTxt.grid(row=2, column=6, pady=5)
+        self.volume = Scale(self, from_=0, to=100, orient=HORIZONTAL, variable=IntVar)
+        self.volume.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+        self.volume.grid(row=2, column=7, pady=5)
+        self.volume.set(int(savedData["volume"]))
+
+        self.searchTxt = Label(self, text="Search:")
+        self.searchTxt.config(bg="gray15", fg="white", bd=0, highlightthickness=0, font=('arial', 13), pady=5)
+        self.searchValue = StringVar()
+        self.searchValue.set("")
+        self.searchValue.trace_add("write", lambda name, index, mode, sv=self.searchValue: self.search(sv))
+        self.searchBar = Entry(self, textvariable=self.searchValue, width=60)
+        self.searchBar.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', insertbackground="white", font=('arial', 13))
+
+        #menu
+        self.menuBar = Menu(self)
+        self.config(menu=self.menuBar)
+
+        self.songMenu = Menu(self.menuBar)
+        self.menuBar.add_cascade(label="Songs", menu=self.songMenu)
+        self.songMenu.add_command(label="Import Songs", command=self.importSongs)
+        self.songMenu.add_command(label="Re-import All Songs", command=self.reimportAll)
+        self.songMenu.add_command(label="Delete Selected Song", command=self.deleteSong)
+        self.songMenu.add_separator()
+        self.songMenu.add_command(label="Select osu! Songs Directory", command=self.getPath)
+        self.songMenu.add_separator()
+        self.songMenu.add_command(label="Download New Songs", command=self.downloadSongs)
+
+        self.playlistMenu = Menu(self.menuBar)
+        self.menuBar.add_cascade(label="Playlist", menu=self.playlistMenu)
+        self.playlistMenu.add_command(label="Create Playlist", command=self.createPlaylist)
+        self.playlistMenu.add_command(label="Delete playlist", command=self.deletePlaylist)
+        self.playlistMenu.add_command(label="Import Playlist", command=self.importPlaylist)
+        self.playlistMenu.add_command(label="Add Song To Playlist", command=self.playlistAddSong)
+
+        self.otherMenu = Menu(self.menuBar)
+        self.menuBar.add_cascade(label="Other", menu=self.otherMenu)
+        self.otherMenu.add_command(label="Check for updates", command=self.testVersion)
+        self.searchBarToggle = IntVar()
+        self.searchBarToggle.set(0)
+        self.menuBar.add_checkbutton(label="Search bar", variable=self.searchBarToggle, command=self.searchToggle)
+        # ----------------------------------------------------------------
+        #set buttons
+        if not self.shuffleVar:
+            self.shuffleButton.grid_remove()
+            self.notShuffleButton.grid()
         else:
-            Stop()
-    else:
-        inactiveTicks = 0
-
-#import all songs, previously imported songs will not be re-checked -> import.data
-def importSongs():
-    global slist
-    print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Importing songs...")
-    slist = []
-    songsList.delete(0, END)
-    temp_song=export_osu_song.export()
-
-    for s in temp_song:
-        s=s.replace("Osu/","").replace(".mp3","")
-        songsList.insert(END,s)
-        slist.append(s)
-    print(f"{bc.OKGREEN}[INFO]{bc.ENDC}", f"Imported {len(slist)} songs !")
-
-#delete and reimport all songs from osu!
-def reimportall():
-    global slist, songsList
-    root.title("osu!player - Re-importing songs")
-    path = 'import.data'
-    slist = []
-    songsList.delete(0, END)
-    os.remove(path)
-    path2 = 'Osu'
-    tmp = os.listdir(path2)
-    for element in tmp:
-        os.remove(path2+"\\"+element)
-    importSongs()
-    root.title("osu!player")
-
-#delete current song from listbox
-def deletesong():
-    curr_song=songsList.curselection()
-    songsList.delete(curr_song[0])
-
-def playSelected(event):
-    global desc, state
-    channel.pause()
-    channel.stop()
-    song=songsList.get(ACTIVE)
-    songsList.selection_set(slist.index(song))
-    desc = song
-    state = "Listening"
-    song=f'Osu\\{song}.mp3'
-    song = mixer.Sound(song)
-    channel.play(song)
-    nowplaying.set(f"{state}: {desc}")
-
-#play the selected song or unpause the current song
-def Play():
-    global desc, state
-    if state == "Paused":
-        channel.unpause()
-        state = "Listening"
-    else:
-        channel.pause()
-        channel.stop()
-        song=songsList.get(ACTIVE)
-        songsList.selection_set(slist.index(song))
-        desc = song
-        state = "Listening"
-        song=f'Osu\\{song}.mp3'
-        song = mixer.Sound(song)
-        channel.play(song)
-    nowplaying.set(f"{state}: {desc}")
-
-#pause the song
-def Pause():
-    channel.pause()
-    global state
-    state = "Paused"
-    nowplaying.set(f"{state}: {desc}")
-
-#stop the music channel and reset it
-def Stop():
-    channel.pause()
-    channel.stop()
-    songsList.selection_clear(ACTIVE)
-    global state, desc
-    state = "Idle"
-    desc = "    "
-    nowplaying.set(f"{state}")
-
-#play previous song
-def Previous():
-    try:
-        channel.pause()
-        channel.stop()
-        global prevx, slist, shuffle
-        if shuffle:
-            temp2 = slist[prevx[-1]]
-            previous_one = songsList.index(prevx[-1])
-            if len(prevx)!=1:
-                prevx.pop()
+            self.shuffleButton.grid()
+            self.notShuffleButton.grid_remove()
+        if self.loopVar == False:
+            self.loop2Button.grid_remove()
+            self.loopButton.grid_remove()
+            self.notLoopButton.grid()
+        elif self.loopVar == True:
+            self.loop2Button.grid_remove()
+            self.notLoopButton.grid_remove()
+            self.loopButton.grid()
+        elif self.loopVar == "loop":
+            self.loopButton.grid_remove()
+            self.notLoopButton.grid_remove()
+            self.loop2Button.grid()
+        if not self.useKeyboard:
+            self.kcButton.grid_remove()
+            self.notKcButton.grid()
         else:
-            previous_one=songsList.curselection()
-            previous_one=previous_one[0]-1
-            if previous_one < 0:
-                previous_one = len(slist)-1
-            temp2=songsList.get(previous_one)
-        global state, desc
-        state = "Listening"
-        desc = temp2
-        temp2=f'Osu\\{temp2}.mp3'
-        song = mixer.Sound(temp2)
-        channel.play(song)
-        songsList.selection_clear(0,END)
-        songsList.see(previous_one)
-        songsList.activate(previous_one)
-        songsList.selection_set(previous_one)
-        nowplaying.set(f"{state}: {desc}")
-    except:
-        print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't play previous song")
-
-#play next song
-def Next():
-    try:
-        channel.pause()
-        channel.stop()
-        global x, shuffle, prevx, slist
-        if shuffle:
-            prevx.append(slist.index(songsList.get(ACTIVE)))
-            x = randint(0, len(slist)-1)
-            temp = slist[x]
-            next_one = songsList.index(x)
-        else:
-            next_one=songsList.curselection()
-            next_one=next_one[0]+1
-            if next_one > len(slist)-1:
-                next_one=0
-            temp=songsList.get(next_one) 
-        global state, desc
-        state = "Listening"
-        desc = temp
-        temp=f'Osu\\{temp}.mp3'
-        song = mixer.Sound(temp)
-        channel.play(song)
-        songsList.selection_clear(0,END)
-        songsList.see(next_one)
-        songsList.activate(next_one)
-        songsList.selection_set(next_one)
-        nowplaying.set(f"{state}: {desc}")
-    except:
-        print(f"{bc.FAIL}[ERROR]{bc.ENDC}","Can't play next song")
+            self.kcButton.grid()
+            self.notKcButton.grid_remove()
+        self.discordPresence()
+        self.changeStatusThread = threading.Thread(target=self.changeStatus)
+        self.update()
+        self.iconbitmap("osu-icon-28.ico")
+        self.protocol("WM_DELETE_WINDOW", self.shutdown)
 
 
-#toggle loop
-loop = True
-def Loop():
-    global loop, loopImage
-    loopList = [False, True, "loop"]
-    index = loopList.index(loop) + 1
-    if index > 2:
-        index = 0
-    loop = loopList[index]
-    if loop == False:
-        loop2Button.grid_remove()
-        notLoopButton.grid()
-    elif loop == True:
-        notLoopButton.grid_remove()
-        loopButton.grid()
-    elif loop == "loop":
-        loopButton.grid_remove()
-        loop2Button.grid()
+    def run(self):
+        self.importSongs()
+        #auto check update
+        self.testVersion(launch=True)
+        self.changeStatusThread.start()
+        while self.runVar:
+            if not self.wait:
+                self.update()
+                self.testPlaying()
+                self.changeVol()
+                self.kinput()
+        self.quit()
+        quit()
 
-#toggle shuffle
-x=0
-prevx = []
-shuffle = True
-def Shuffle():
-    global shuffle
-    if shuffle == True:
-        shuffle = False
-        shuffleButton.grid_remove()
-        notShuffleButton.grid()
-    elif shuffle == False:
-        shuffle = True
-        notShuffleButton.grid_remove()
-        shuffleButton.grid()
 
-#toggle keyboard control
-def kcstate():
-    global kcontrol
-    if kcontrol == True:
-        kcontrol = False
-        kc.grid_remove()
-        notKc.grid()
-    elif kcontrol == False:
-        kcontrol = True
-        notKc.grid_remove()
-        kc.grid()
+    def discordPresence(self):
+        self.start = time()
+        client_id = '980519752025931836'
+        try:
+            self.RPC = Presence(client_id)
+            self.RPC.connect()
+            print(f"{bc.OKBLUE}[INIT]{bc.ENDC}", "Discord RPC is ready !")
+        except:
+            print(f"{bc.OKBLUE}[INIT]{bc.ENDC}", "Discord not found .")
 
-#change the volume
-regvol = 100
-def changeVol():
-    global channel, regvol, volume
-    regvol = int(volume.get())
-    if channel.get_volume() == regvol/100:
-        pass
-    else:
-        channel.set_volume(regvol/100)
 
-#toggle the search bar
-def searchToggle():
-    if searchBarToggle.get() == 0:
-        searchValue.set("")
-        searchBar.grid_remove()
-        searchTxt.grid_remove()
-    elif searchBarToggle.get() == 1:
-        searchTxt.grid(row=4, column=0)
-        searchBar.grid(row=4, column=1, columnspan=7, pady=5)
-        searchBar.focus_set()
+    def getPath(self):
+        self.path = filedialog.askdirectory(title="Select your osu! songs directory")
+        if self.path != "":
+            open("path.data", "w").write(self.path)
 
-#search function to search songs in the app
-def search(searchValue):
-    songsList.delete(0, END)
-    tmp = searchValue.get()
-    for element in slist:
-        if tmp.lower() in element.lower():
-            songsList.insert(END, element)
-
-#window for updates info
-def versionWin(update):
-    def updateApp():
-        webbrowser.open("https://github.com/OJddJO/osu-music-player.exe/releases/latest/")
-        vWin.destroy()
-
-    vWin = Toplevel(root)
-    vWin.geometry("200x40")
-    vWin.iconbitmap("osu-icon-28.ico")
-    vWin.config(bg="gray15")
-    vWin.title("Check for update")
-    vWin.resizable(False, False)
-
-    txt = StringVar()
-    txtUpdate = Label(vWin, textvariable=txt)
-    txtUpdate.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
-    txtUpdate.pack()
-    if update:
-        txt.set("Update Available !")
-        updateButton = Button(vWin, text="Update", command=updateApp)
-        updateButton.config(bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
-        updateButton.pack()
-    else:
-        txt.set("Your version is the latest !")
     
-    def shutdown():
-        vWin.destroy()
-    vWin.protocol("WM_DELETE_WINDOW", shutdown)
-
-    threading.Thread(target = vWin.mainloop)
-
-#check version, if not latest open "versionWin" window
-update = False
-def testVersion(launch=False):
-    global update
-    version = open("version.lock").read()
-    latestVersion = requests.get("https://api.github.com/repos/OJddJO/osu-music-player.exe/releases/latest").json()["tag_name"]
-    if version != latestVersion:
-        update = True
-        if launch:
-            print(f"{bc.WARNING}[WARNING]{bc.ENDC}", "Update available !")
-            versionWin(update)
-    if not launch:
-        versionWin(update)
-
-#shutdown function
-def shutdown():
-    global run
-    #save data to files
-    open("data/volume.sav", 'w').write(str(int(volume.get())))
-    open("data/shuffle.sav", 'w').write(str(shuffle))
-    open("data/loop.sav", 'w').write(str(loop))
-    open("data/kcontrol.sav", 'w').write(str(kcontrol))
-    run = False
-    root.quit()
-
-#playlist functions
-def createPlaylist():
-    def create():
-        name = playlistName.get()
-        songs = songsList.curselection()
-        songsFile = []
-        for index in songs:
-            songsFile.append(slist[index])
-        if name == "":
+    def changeStatus(self):
+        try:
+            while self.runVar:
+                self.RPC.update(
+                    large_image="osu-icon-28",
+                    large_text="Osu!Player",
+                    state=self.state,
+                    details=self.desc.replace(".mp3", ""),
+                    start=self.start,
+                    buttons=[{"label": "Download the app", "url": "https://github.com/OJddJO/osu-music-player.exe"}]
+                )
+        except:
             pass
+    
+
+    def kinput(self):
+        if self.useKeyboard:
+            if keyboard.is_pressed('ctrl+alt+space'):
+                if self.state == 'Paused' or self.state == 'Idle':
+                    self.play()
+                    while keyboard.is_pressed('ctrl+alt+space'):
+                        ''
+                elif self.state == 'Listening':
+                    self.pause()
+                    while keyboard.is_pressed('ctrl+alt+space'):
+                        ''
+            elif keyboard.is_pressed('ctrl+alt+left'):
+                self.previous()
+                while keyboard.is_pressed('ctrl+alt+left'):
+                    ''
+            elif keyboard.is_pressed('ctrl+alt+right'):
+                self.next()
+                while keyboard.is_pressed('ctrl+alt+right'):
+                    ''
+            elif keyboard.is_pressed('ctrl+alt+up'):
+                self.volume.set(self.volume.get()+5)
+                while keyboard.is_pressed('ctrl+alt+up'):
+                    ''
+            elif keyboard.is_pressed('ctrl+alt+down'):
+                self.volume.set(self.volume.get()-5)
+                while keyboard.is_pressed('ctrl+alt+down'):
+                    ''
+
+
+    def testPlaying(self):
+        if not self.channel.get_busy():
+            if self.loopVar == 'loop':
+                if self.state != 'Paused' and self.state != 'Idle':
+                    self.inactiveTicks += 1
+                    if self.inactiveTicks == 1000:
+                        self.play()
+            elif self.loopVar==True:
+                if self.state != 'Paused' and self.state != 'Idle':
+                    self.inactiveTicks += 1
+                    if self.inactiveTicks == 1000:
+                        self.next()
+            else:
+                self.stop()
         else:
-            open(f"playlists/{name}.txt", 'w').write(str(songsFile))
-            playlistWin.destroy()
+            self.inactiveTicks = 0
 
-    def shutdown():
-        playlistWin.destroy()
-
-    try:
-        os.listdir("playlists")
-    except:
-        print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Creating playlists directory")
-        os.mkdir("playlists")
-
-    playlistWin = Toplevel(root)
-    playlistWin.iconbitmap("osu-icon-28.ico")
-    playlistWin.config(bg="gray15")
-    playlistWin.title("Create a playlist")
-    playlistWin.resizable(False, False)
-    playlistWin.protocol("WM_DELETE_WINDOW", shutdown)
-
-    songsList=Listbox(playlistWin, selectmode=MULTIPLE, height=14, width=50)
-    songsList.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
-    songsList.grid(columnspan=8)
-
-    playlistLabel = Label(playlistWin, text="Name :")
-    playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
-    playlistLabel.grid(row=1, column=0, pady=5)
-
-    playlistName = StringVar()
-    playlistName.set("")
-    playlistNameEntry = Entry(playlistWin, textvariable=playlistName, width=40, justify='center')
-    playlistNameEntry.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-    playlistNameEntry.grid(row=1, column=1, columnspan=5, pady=5)
-
-    createButton = Button(playlistWin, text="Create", command=create)
-    createButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-    createButton.grid(row=1, column=6, pady=5)
-
-    cancelButton = Button(playlistWin, text="Cancel", command=shutdown)
-    cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-    cancelButton.grid(row=1, column=7, pady=5)
-
-    temp_song=export_osu_song.export()
-
-    for s in temp_song:
-        s=s.replace("Osu/","").replace(".mp3","")
-        songsList.insert(END,s)
-        slist.append(s)
+    
+    def importSongs(self):
+        print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Importing songs...")
+        self.slist = []
+        self.songsList.delete(0, END)
+        tmp =  export_osu_song.export()
+        for song in tmp:
+            song = song.replace("Osu/", "").replace(".mp3", "")
+            self.songsList.insert(END, song)
+            self.slist.append(song)
+        print(f"{bc.OKGREEN}[INFO]{bc.ENDC}", f"Imported {len(self.slist)} songs !")
 
 
-def importPlaylist():
-    def shutdown():
-        playlistWin.destroy()
+    def reimportAll(self):
+        self.title("osu!player - Re-importing songs")
+        path = 'import.data'
+        self.slist = []
+        self.songsList.delete(0, END)
+        os.remove(path)
+        path2 = 'Osu/'
+        tmp = os.listdir(path2)
+        for song in tmp:
+            os.remove(path2+song)
+        self.importSongs()
+        self.title("osu!player")
 
-    def usePlaylist():
-        global slist
-        slist = []
+
+    def deleteSong(self):
         try:
-            i = playlistListbox.curselection()[0]
-            playlist = eval(open(f'playlists\\{playlistPath[i]}').read())
-            songsList.delete(0, END)
-            for element in playlist:
-                songsList.insert(END, element)
-                slist.append(element)
-            playlistWin.destroy()
+            curr_song = self.songsList.curselection()
+            self.songsList.delete(curr_song[0])
+            os.remove(f'Osu/{self.slist[curr_song[0]]}.mp3')
+            self.slist.pop(curr_song[0])
         except:
-            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't import playlist")
+            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't delete song !")
 
-    def changePlaylistName():
+
+    def playSelected(self, event):
+        self.channel.stop()
+        song = self.songsList.get(ACTIVE)
+        self.songsList.selection_set(self.slist.index(song))
+        self.desc = song
+        self.state = "Listening"
+        song = f'Osu/{song}.mp3'
+        song = mixer.Sound(song)
+        self.channel.play(song)
+        self.nowPlaying.set(f"{self.state}: {self.desc}")
+
+
+    def play(self):
+        if self.state == 'Paused':
+            self.channel.unpause()
+            self.state = 'Listening'
+        else:
+            self.channel.stop()
+            song = self.songsList.get(ACTIVE)
+            self.songsList.selection_set(self.slist.index(song))
+            self.desc = song
+            self.state = "Listening"
+            song = f'Osu/{song}.mp3'
+            song = mixer.Sound(song)
+            self.channel.play(song)
+        self.nowPlaying.set(f"{self.state}: {self.desc}")
+
+
+    def pause(self):
+        self.channel.pause()
+        self.state = 'Paused'
+        self.nowPlaying.set(f"{self.state}: {self.desc}")
+
+
+    def stop(self):
+        self.channel.stop()
+        self.songsList.selection_clear(ACTIVE)
+        self.state = 'Idle'
+        self.desc = '   '
+        self.nowPlaying.set(f"{self.state}")
+
+
+    def previous(self):
         try:
+            self.channel.stop()
+            if self.shuffle:
+                tmp = self.slist[self.prevx[-1]]
+                previousOne = self.songsList.index(self.prevx[-1])
+                if len(self.prevx) != 1:
+                    self.prevx.pop()
+            else:
+                previousOne = self.songsList.curselection()
+                previousOne = previousOne[0] - 1
+                if previousOne < 0:
+                    previousOne = len(self.slist) - 1
+                tmp = self.songsList.get(previousOne)
+            self.state = "Listening"
+            self.desc = tmp
+            tmp = f'Osu/{tmp}.mp3'
+            song = mixer.Sound(tmp)
+            self.channel.play(song)
+            self.songsList.selection_clear(0, END)
+            self.songsList.see(previousOne)
+            self.songsList.selection_set(previousOne)
+            self.songsList.activate(previousOne)
+            self.nowPlaying.set(f"{self.state}: {self.desc}")
+        except:
+            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't play previous song")
+
+
+    def next(self):
+        try:
+            self.channel.stop()
+            if self.shuffle:
+                self.prevx.append(self.slist.index(self.songsList.get(ACTIVE)))
+                x = randint(0, len(self.slist)-1)
+                while self.slist[x] in self.prevx:
+                    x = randint(0, len(self.slist)-1)
+                tmp = self.slist[x]
+                nextOne = self.songsList.index(x)
+            else:
+                nextOne = self.songsList.curselection()
+                nextOne = nextOne[0] + 1
+                if nextOne > len(self.slist) - 1:
+                    nextOne = 0
+                tmp = self.songsList.get(nextOne)
+            self.state = "Listening"
+            self.desc = tmp
+            tmp = f'Osu/{tmp}.mp3'
+            song = mixer.Sound(tmp)
+            self.channel.play(song)
+            self.songsList.selection_clear(0, END)
+            self.songsList.see(nextOne)
+            self.songsList.selection_set(nextOne)
+            self.songsList.activate(nextOne)
+            self.nowPlaying.set(f"{self.state}: {self.desc}")
+        except:
+            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't play next song")
+
+
+    def loop(self):
+        loopList = [False, True, 'loop']
+        index = loopList.index(self.loopVar)+1
+        if index > 2:
+            index = 0
+        self.loopVar = loopList[index]
+        if self.loopVar == False:
+            self.loop2Button.grid_remove()
+            self.loopButton.grid_remove()
+            self.notLoopButton.grid()
+        elif self.loopVar == True:
+            self.loop2Button.grid_remove()
+            self.notLoopButton.grid_remove()
+            self.loopButton.grid()
+        elif self.loopVar == "loop":
+            self.loopButton.grid_remove()
+            self.notLoopButton.grid_remove()
+            self.loop2Button.grid()
+
+
+    def shuffle(self):
+        if self.shuffle:
+            self.shuffle = False
+            self.shuffleButton.grid_remove()
+            self.notShuffleButton.grid()
+        else:
+            self.shuffle = True
+            self.notShuffleButton.grid_remove()
+            self.shuffleButton.grid()
+
+
+    def kc(self):
+        if self.useKeyboard:
+            self.useKeyboard = False
+            self.kcButton.grid_remove()
+            self.notKcButton.grid()
+        else:
+            self.useKeyboard = True
+            self.notKcButton.grid_remove()
+            self.kcButton.grid()
+
+
+    def changeVol(self):
+        self.regVol = int(self.volume.get())
+        if self.channel.get_volume() != self.regVol/100:
+            self.channel.set_volume(self.regVol/100)
+
+
+    def searchToggle(self):
+        if self.searchBarToggle.get() == 1:
+            self.searchTxt.grid(row=4, column=0)
+            self.searchBar.grid(row=4, column=1, columnspan=7, pady=5)
+            self.searchBar.focus_set()
+        else:
+            self.searchValue.set("")
+            self.searchTxt.grid_remove()
+            self.searchBar.grid_remove()
+
+
+    def search(self, sv):
+        self.songsList.delete(0, END)
+        for song in self.slist:
+            if sv.get().lower() in song.lower():
+                self.songsList.insert(END, song)
+
+
+    def versionWindow(self, update):
+        def updateApp():
+            webbrowser.open("https://github.com/OJddJO/osu-music-player.exe/releases/latest/")
+            vWin.destroy()
+
+        vWin = Toplevel(self)
+        vWin.geometry("200x40")
+        vWin.iconbitmap("osu-icon-28.ico")
+        vWin.resizable(False, False)
+        vWin.title("Check for updates")
+        vWin.config(bg="gray15")
+
+        txt = StringVar()
+        txtUpdate = Label(vWin, textvariable=txt)
+        txtUpdate.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+        txtUpdate.pack()
+        if update:
+            txt.set("Update available !")
+            updateButton = Button(vWin, text="Update", command=updateApp)
+            updateButton.config(bg="gray40",fg="white",bd=2,highlightthickness=0, relief='groove')
+            updateButton.pack()
+        else:
+            txt.set("You have the latest version !")
+
+        def shutdown():
+            vWin.destroy()
+        vWin.protocol("WM_DELETE_WINDOW", shutdown)
+
+
+    def testVersion(self, launch=False):
+        try:
+            appVersion = open("version.lock").read()
+            version = requests.get("https://api.github.com/repos/OJddJO/osu-music-player.exe/releases/latest").json()["tag_name"]
+            if launch:
+                print(f"{bc.OKBLUE}[INFO]{bc.ENDC}", "Checking for updates...")
+                if appVersion != version:
+                    print(f"{bc.WARNING}[WARNING]{bc.ENDC}", "Update available !")
+                    self.versionWindow(True)
+                else:
+                    print(f"{bc.OKGREEN}[INFO]{bc.ENDC}", "You have the latest version !")
+            else:
+                if appVersion != version:
+                    self.versionWindow(True)
+                else:
+                    self.versionWindow(False)
+        except:
+            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't check for updates !")
+
+
+    def createPlaylist(self):
+        def create():
+            if playlistName.get() != "":
+                songs = songsList.curselection()
+                songsFile = []
+                for index in songs:
+                    songsFile.append(self.slist[index])
+                open(f"playlists/{playlistName.get()}.txt", 'w').write(str(songsFile))
+                pWin.destroy()
+            else:
+                print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Playlist name can't be empty !")
+
+        def shutdown():
+            pWin.destroy()
+
+        try:
+            os.listdir("playlists")
+        except:
+            print(f"{bc.OKCYAN}[INFO]{bc.ENDC}", "Creating playlists directory...", end=" ")
+            os.mkdir("playlists")
+            print("Done !")
+
+        pWin = Toplevel(self)
+        pWin.iconbitmap("osu-icon-28.ico")
+        pWin.resizable(False, False)
+        pWin.title("Create playlist")
+        pWin.config(bg="gray15")
+        pWin.protocol("WM_DELETE_WINDOW", shutdown)
+
+        songsList=Listbox(pWin, selectmode=MULTIPLE, height=14, width=50)
+        songsList.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+        songsList.grid(columnspan=8)
+
+        playlistLabel = Label(pWin, text="Name :")
+        playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+        playlistLabel.grid(row=1, column=0)
+
+        playlistName = StringVar()
+        playlistName.set("")
+        playlistNameEntry = Entry(pWin, textvariable=playlistName, width=40, justify='center')
+        playlistNameEntry.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        playlistNameEntry.grid(row=1, column=1, columnspan=5)
+
+        createButton = Button(pWin, text="Create", command=create)
+        createButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        createButton.grid(row=1, column=6)
+
+        cancelButton = Button(pWin, text="Cancel", command=shutdown)
+        cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        cancelButton.grid(row=1, column=7)
+
+        temp_song=export_osu_song.export()
+
+        for s in temp_song:
+            s=s.replace("Osu/","").replace(".mp3","")
+            songsList.insert(END,s)
+            self.slist.append(s)
+
+
+    def importPlaylist(self):
+        def usePlaylist():
+            slistCopy = self.slist.copy()
+            self.slist = []
+            self.songsList.delete(0, END)
             i = playlistListbox.curselection()[0]
             playlistNameVar.set(playlistPath[i])
-        except:
-            pass
+            songs = eval(open(f"playlists/{playlistPath[i]}").read())
+            try:
+                for song in songs:
+                    if song in slistCopy:
+                        self.slist.append(song)
+                        self.songsList.insert(END, song)
+                    else:
+                        print(f"{bc.WARNING}[WARNING]{bc.ENDC}", f"{song} not found !")
+                        print(f"{bc.WARNING}[WARNING]{bc.ENDC}", "Removing it from the playlist...", end=" ")
+                        songs.remove(song)
+                        print("Done !")
+            except:
+                print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't import playlist !")
+            #save playlist
+            open(f"playlists/{playlistPath[i]}", 'w').write(str(songs))
+            pWin.destroy()
 
-    playlistWin = Toplevel(root)
-    playlistWin.iconbitmap("osu-icon-28.ico")
-    playlistWin.config(bg="gray15")
-    playlistWin.title("Import a playlist")
-    playlistWin.resizable(False, False)
-    playlistWin.protocol("WM_DELETE_WINDOW", shutdown)
+        def changePlaylistName():
+            try:
+                i = playlistListbox.curselection()[0]
+                playlistNameVar.set(playlistPath[i])
+            except:
+                pass
 
-    playlistListbox = Listbox(playlistWin, selectmode=SINGLE, height=14, width=50)
-    playlistListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
-    playlistListbox.grid(columnspan=8)
-    playlistListbox.bind("<Double-Button-1>", lambda args, usePlaylist=usePlaylist: usePlaylist())
-    playlistListbox.bind("<Button-1>", lambda args, changePlaylistName=changePlaylistName: changePlaylistName())
+        def shutdown():
+            pWin.destroy()
+            
+        pWin = Toplevel(self)
+        pWin.iconbitmap("osu-icon-28.ico")
+        pWin.config(bg="gray15")
+        pWin.title("Import a playlist")
+        pWin.resizable(False, False)
+        pWin.protocol("WM_DELETE_WINDOW", shutdown)
 
-    playlistLabel = Label(playlistWin, text="Name:")
-    playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
-    playlistLabel.grid(row=1, column=0, pady=5)
+        playlistListbox = Listbox(pWin, selectmode=SINGLE, height=14, width=50)
+        playlistListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+        playlistListbox.grid(columnspan=8)
+        playlistListbox.bind("<Double-Button-1>", lambda args: usePlaylist())
+        playlistListbox.bind("<Button-1>", lambda args: changePlaylistName())
 
-    playlistNameVar = StringVar()
-    playlistNameVar.set("")
-    playlistNameLabel = Label(playlistWin, textvariable=playlistNameVar, width=40, justify='center')
-    playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
-    playlistNameLabel.grid(row=1, column=1, columnspan=5, pady=5)
+        playlistLabel = Label(pWin, text="Selected:")
+        playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+        playlistLabel.grid(row=1, column=0)
 
-    useButton = Button(playlistWin, text="Select", command=usePlaylist)
-    useButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-    useButton.grid(row=1, column=6, pady=5)
+        playlistNameVar = StringVar()
+        playlistNameVar.set("")
+        playlistNameLabel = Label(pWin, textvariable=playlistNameVar, width=40, justify='center')
+        playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
+        playlistNameLabel.grid(row=1, column=1, columnspan=5)
 
-    cancelButton = Button(playlistWin, text="Cancel", command=shutdown)
-    cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-    cancelButton.grid(row=1, column=7, pady=5)
+        useButton = Button(pWin, text="Select", command=usePlaylist)
+        useButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        useButton.grid(row=1, column=6)
 
-    playlistPath = []
-    for element in os.listdir("playlists"):
-        if element.endswith(".txt"):
-            playlistPath.append(element)
-            playlistName = element.replace(".txt", "")
-            playlistListbox.insert(END, playlistName)
+        cancelButton = Button(pWin, text="Cancel", command=shutdown)
+        cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        cancelButton.grid(row=1, column=7)
 
-
-def deletePlaylist():
-    def shutdown():
-        playlistWin.destroy()
-
-    def delete():
+        playlistPath = []
         try:
-            i = playlistListbox.curselection()[0]
-            os.remove(f"playlists\\{playlistPath[i]}")
-            playlistWin.destroy()
+            for element in os.listdir("playlists"):
+                if element.endswith(".txt"):
+                    playlistPath.append(element)
+                    playlistName = element.replace(".txt", "")
+                    playlistListbox.insert(END, playlistName)
         except:
-            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't delete playlist")
+            print(f"{bc.WARNING}[WARNING]{bc.ENDC}", "No playlist found !")
 
-    def changePlaylistName():
+
+    def deletePlaylist(self):
+        def shutdown():
+            pWin.destroy()
+
+        def delete():
+            try:
+                i = playlistListbox.curselection()[0]
+                os.remove(f"playlists/{playlistPath[i]}")
+                pWin.destroy()
+            except:
+                print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't delete playlist")
+
+        def changePlaylistName():
+            try:
+                i = playlistListbox.curselection()[0]
+                playlistNameVar.set(playlistPath[i])
+            except:
+                pass
+
+        pWin = Toplevel(self)
+        pWin.iconbitmap("osu-icon-28.ico")
+        pWin.config(bg="gray15")
+        pWin.title("Delete a playlist")
+        pWin.resizable(False, False)
+        pWin.protocol("WM_DELETE_WINDOW", shutdown)
+
+        playlistListbox = Listbox(pWin, selectmode=SINGLE, height=14, width=50)
+        playlistListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+        playlistListbox.grid(columnspan=8)
+        playlistListbox.bind("<Double-Button-1>", lambda args: delete())
+        playlistListbox.bind("<Button-1>", lambda args: changePlaylistName())
+
+        playlistLabel = Label(pWin, text="Name:")
+        playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+        playlistLabel.grid(row=1, column=0)
+
+        playlistNameVar = StringVar()
+        playlistNameVar.set("")
+        playlistNameLabel = Label(pWin, textvariable=playlistNameVar, width=40, justify='center')
+        playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
+        playlistNameLabel.grid(row=1, column=1, columnspan=5)
+
+        deleteButton = Button(pWin, text="Delete", command=delete)
+        deleteButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        deleteButton.grid(row=1, column=6)
+
+        cancelButton = Button(pWin, text="Cancel", command=shutdown)
+        cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        cancelButton.grid(row=1, column=7)
+
+        playlistPath = []
         try:
-            i = playlistListbox.curselection()[0]
-            playlistNameVar.set(playlistPath[i])
+            for element in os.listdir("playlists"):
+                if element.endswith(".txt"):
+                    playlistPath.append(element)
+                    playlistName = element.replace(".txt", "")
+                    playlistListbox.insert(END, playlistName)
         except:
-            pass
-
-    playlistWin = Toplevel(root)
-    playlistWin.iconbitmap("osu-icon-28.ico")
-    playlistWin.config(bg="gray15")
-    playlistWin.title("Delete a playlist")
-    playlistWin.resizable(False, False)
-    playlistWin.protocol("WM_DELETE_WINDOW", shutdown)
-
-    playlistListbox = Listbox(playlistWin, selectmode=SINGLE, height=14, width=50)
-    playlistListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
-    playlistListbox.grid(columnspan=8)
-    playlistListbox.bind("<Double-Button-1>", lambda args, usePlaylist=delete: usePlaylist())
-    playlistListbox.bind("<Button-1>", lambda args, changePlaylistName=changePlaylistName: changePlaylistName())
-
-    playlistLabel = Label(playlistWin, text="Name:")
-    playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
-    playlistLabel.grid(row=1, column=0, pady=5)
-
-    playlistNameVar = StringVar()
-    playlistNameVar.set("")
-    playlistNameLabel = Label(playlistWin, textvariable=playlistNameVar, width=40, justify='center')
-    playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
-    playlistNameLabel.grid(row=1, column=1, columnspan=5, pady=5)
-
-    deleteButton = Button(playlistWin, text="Delete", command=delete)
-    deleteButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-    deleteButton.grid(row=1, column=6, pady=5)
-
-    cancelButton = Button(playlistWin, text="Cancel", command=shutdown)
-    cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
-    cancelButton.grid(row=1, column=7, pady=5)
-
-    playlistPath = []
-    for element in os.listdir("playlists"):
-        if element.endswith(".txt"):
-            playlistPath.append(element)
-            playlistName = element.replace(".txt", "")
-            playlistListbox.insert(END, playlistName)
-
-wait = False
-def downloadNewSongs():
-    global wait
-
-    #disable tk window
-    wait = True
-    menuBar.entryconfig(1, state=DISABLED)
-    menuBar.entryconfig(2, state=DISABLED)
-    menuBar.entryconfig(3, state=DISABLED)
-    menuBar.entryconfig(4, state=DISABLED)
-
-    root.title("osu!player - Downloading songs")
-    osu_song_downloader.Downloader().run()
-    try:
-        os.rmdir("temp")
-    except:
-        print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't delete temp folder")
-    importSongs()
-    root.title("osu!player")
-
-    #enable tk window
-    menuBar.entryconfig(1, state=NORMAL)
-    menuBar.entryconfig(2, state=NORMAL)
-    menuBar.entryconfig(3, state=NORMAL)
-    menuBar.entryconfig(4, state=NORMAL)
-    wait = False
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
-
-#main config
-root=Tk()
-root.title('osu!player')
-root.resizable(False, False)
-root.config(bg="gray15")
-
-mixer.init()
-channel = mixer.Channel(1)
-
-#widget
-songsList=Listbox(root, selectmode=SINGLE, height=14, width=70)
-songsList.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
-songsList.grid(columnspan=8)
-songsList.bind("<Double-Button-1>", playSelected)
-
-separator = Separator(root, orient=HORIZONTAL)
-separator.grid(row=1, column=0, columnspan=8, sticky="ew")
-
-nowplaying=StringVar()
-nowplaying.set(f"{state}")
-playingLabel=Label(root,textvariable=nowplaying,width=60)
-playingLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
-playingLabel.grid(row=2, column=0, columnspan=6, pady=5)
-
-playImage = PhotoImage(file="icon/play_button.png")
-playButton=Button(root, image=playImage, command=Play)
-playButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-playButton.grid(row=3,column=0, padx=5)
-
-pauseImage = PhotoImage(file="icon/pause_button.png")
-pauseButton=Button(root, image=pauseImage, command=Pause)
-pauseButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-pauseButton.grid(row=3,column=1, padx=5)
-
-stopImage = PhotoImage(file="icon/stop_button.png")
-stopButton=Button(root, image=stopImage, command=Stop)
-stopButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-stopButton.grid(row=3,column=2, padx=5)
-
-previousImage = PhotoImage(file="icon/previous_button.png")
-previousButton=Button(root, image=previousImage, command=Previous)
-previousButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-previousButton.grid(row=3,column=3, padx=5)
-
-nextImage = PhotoImage(file="icon/next_button.png")
-nextButton=Button(root, image=nextImage, command=Next)
-nextButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-nextButton.grid(row=3,column=4, padx=5)
-
-loopImage = PhotoImage(file="icon/loop_button.png")
-loopButton=Button(root, image=loopImage, command=Loop)
-loopButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-loopButton.grid(row=3,column=5, padx=5)
-loopButton.grid_remove()
-notLoopImage = PhotoImage(file="icon/not_loop_button.png")
-notLoopButton=Button(root, image=notLoopImage, command=Loop)
-notLoopButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-notLoopButton.grid(row=3,column=5, padx=5)
-notLoopButton.grid_remove()
-loop2Image = PhotoImage(file="icon/loop2_button.png")
-loop2Button=Button(root, image=loop2Image, command=Loop)
-loop2Button.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-loop2Button.grid(row=3,column=5, padx=5)
-loop2Button.grid_remove()
-
-shuffleImage = PhotoImage(file="icon/shuffle_button.png")
-shuffleButton=Button(root, image=shuffleImage, command=Shuffle)
-shuffleButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-shuffleButton.grid(row=3,column=6, padx=5)
-notShuffleImage = PhotoImage(file="icon/not_shuffle_button.png")
-notShuffleButton = Button(root, image=notShuffleImage, command=Shuffle)
-notShuffleButton.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-notShuffleButton.grid(row=3,column=6, padx=5)
-notShuffleButton.grid_remove()
-
-kcImage = PhotoImage(file="icon/keyboard_button.png")
-kc = Button(root, image=kcImage, command=kcstate)
-kc.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-kc.grid(row=3,column=7, padx=5)
-notKcImage = PhotoImage(file="icon/not_keyboard_button.png")
-notKc = Button(root, image=notKcImage, command=kcstate)
-notKc.config(bg="gray15", activebackground="gray15", highlightthickness=0, bd=0)
-notKc.grid(row=3,column=7, padx=5)
-notKc.grid_remove()
-
-voltxt = Label(root, bg="gray15", fg="white", text="Volume:")
-voltxt.config(font=('arial',12),bd=0,highlightthickness=0)
-voltxt.grid(row=2, column=6, pady=5)
-
-volume = Scale(root, from_=0, to=100, orient=HORIZONTAL, variable=IntVar)
-volume.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
-volume.grid(row=2, column=7, pady=5)
-volume.set(100)
-
-searchTxt = Label(root, text="Search:")
-searchTxt.config(bg="gray15", fg="white", bd=0, highlightthickness=0, font=('arial',12))
-searchValue = StringVar()
-searchValue.set("")
-searchValue.trace_add("write", lambda name, index, mode, sv=searchValue : search(sv))
-searchBar = Entry(root, textvariable=searchValue, width=60)
-searchBar.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', insertbackground="white", font=('arial', 13))
-
-#menu
-menuBar=Menu(root)
-root.config(menu=menuBar)
-
-songMenu=Menu(menuBar)
-menuBar.add_cascade(label="Songs",menu=songMenu)
-songMenu.add_command(label="Reset songs list",command=importSongs)
-songMenu.add_command(label="Re-import all songs", command=reimportall)
-songMenu.add_command(label="Delete song",command=deletesong)
-songMenu.add_separator()
-songMenu.add_command(label="Select osu! songs directory", command=getPath)
-songMenu.add_separator()
-songMenu.add_command(label="Download new songs", command=downloadNewSongs)
-
-playlistMenu = Menu(menuBar)
-menuBar.add_cascade(label="Playlist", menu=playlistMenu)
-playlistMenu.add_command(label="New Playlist", command=createPlaylist)
-playlistMenu.add_command(label="Delete Playlist", command=deletePlaylist)
-playlistMenu.add_command(label="Import playlist", command=importPlaylist)
-
-otherMenu = Menu(menuBar)
-menuBar.add_cascade(label="Other", menu=otherMenu)
-searchBarToggle = IntVar()
-searchBarToggle.set(0)
-otherMenu.add_command(label="Check for update", command=testVersion)
-menuBar.add_checkbutton(label="Search Bar", variable=searchBarToggle, command=searchToggle)
+            print(f"{bc.WARNING}[WARNING]{bc.ENDC}", "No playlist found !")
 
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+    def playlistAddSong(self):
+        def shutdown():
+            pWin.destroy()
 
-#run
-#load saved data
-try:
-    savedData = {
-        "volume": open("data/volume.sav").read(),
-        "shuffle": eval(open("data/shuffle.sav").read()),
-        "loop": eval(open("data/loop.sav").read()),
-        "kcontrol": eval(open("data/kcontrol.sav").read())
-    }
-except:
-    print(f"{bc.OKBLUE}[INFO]{bc.ENDC}", "No saved data found, creating new one")
-    os.makedirs("data")
-    savedData = {
-        "volume": "100",
-        "shuffle": True,
-        "loop": True,
-        "kcontrol": True
-    }
-    open("data/volume.sav", 'w').write("100")
-    open("data/shuffle.sav", 'w').write("True")
-    open("data/loop.sav", 'w').write("True")
-    open("data/kcontrol.sav", 'w').write("True")
+        def addSong():
+            try:
+                i = playlistPath.index(playlistNameVar.get())
+                playlist = eval(open(f"playlists/{playlistPath[i]}").read())
+                for songs in songListbox.curselection():
+                    playlist.append(slist[songs])
+                #remove duplicates
+                playlist = list(dict.fromkeys(playlist))
+                open(f"playlists/{playlistPath[i]}", 'w').write(str(playlist))
+                pWin.destroy()
+            except:
+                print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't add song")
 
-volume.set(int(savedData["volume"]))
-shuffle = savedData["shuffle"]
-loop = savedData["loop"]
-kcontrol = savedData["kcontrol"]
+        def changePlaylistName():
+            try:
+                i = playlistListbox.curselection()[0]
+                playlistNameVar.set(playlistPath[i])
+            except:
+                pass
 
-#set buttons
-if not shuffle:
-    shuffleButton.grid_remove()
-    notShuffleButton.grid()
-else:
-    shuffleButton.grid()
-    notShuffleButton.grid_remove()
-if loop == False:
-    loop2Button.grid_remove()
-    notLoopButton.grid()
-elif loop == True:
-    notLoopButton.grid_remove()
-    loopButton.grid()
-elif loop == "loop":
-    loopButton.grid_remove()
-    loop2Button.grid()
-if not kcontrol:
-    kc.grid_remove()
-    notKc.grid()
-else:
-    kc.grid()
-    notKc.grid_remove()
+        pWin = Toplevel(self)
+        pWin.iconbitmap("osu-icon-28.ico")
+        pWin.config(bg="gray15")
+        pWin.title("Delete a playlist")
+        pWin.resizable(False, False)
+        pWin.protocol("WM_DELETE_WINDOW", shutdown)
+
+        playlistListbox = Listbox(pWin, selectmode=SINGLE, height=4, width=50)
+        playlistListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+        playlistListbox.grid(columnspan=8, row=0, column=0)
+        playlistListbox.bind("<Button-1>", lambda args: changePlaylistName())
+
+        sep = Separator(pWin, orient=HORIZONTAL)
+        sep.grid(columnspan=8, row=1, column=0, sticky="ew")
+
+        self.importSongs()
+        songListbox = Listbox(pWin, selectmode=MULTIPLE, height=10, width=50)
+        songListbox.config(bg="gray15", fg="white", selectbackground="gray", selectforeground="black", bd=0, highlightthickness=0, font=('arial', 15))
+        songListbox.grid(columnspan=8, row=2, column=0)
+        slist = self.slist.copy()
+        for song in slist:
+            songListbox.insert(END, song)
+        
+        playlistLabel = Label(pWin, text="Name:")
+        playlistLabel.config(bg="gray15", fg="white", bd=0, highlightthickness=0)
+        playlistLabel.grid(row=3, column=0)
+
+        playlistNameVar = StringVar()
+        playlistNameVar.set("")
+        playlistNameLabel = Label(pWin, textvariable=playlistNameVar, width=40, justify='center')
+        playlistNameLabel.config(bg="gray15", fg="white", bd=2, highlightthickness=0, relief='groove', font=('arial', 13))
+        playlistNameLabel.grid(row=3, column=1, columnspan=5)
+
+        addButton = Button(pWin, text="Add", command=addSong)
+        addButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        addButton.grid(row=3, column=6)
+
+        cancelButton = Button(pWin, text="Cancel", command=shutdown)
+        cancelButton.config(bg="gray40", fg="white", bd=2, highlightthickness=0, relief='groove')
+        cancelButton.grid(row=3, column=7)
+
+        playlistPath = []
+        try:
+            for element in os.listdir("playlists"):
+                if element.endswith(".txt"):
+                    playlistPath.append(element)
+                    playlistName = element.replace(".txt", "")
+                    playlistListbox.insert(END, playlistName)
+        except:
+            print(f"{bc.WARNING}[WARNING]{bc.ENDC}", "No playlist found !")
 
 
-#your osu! game directory
-try:
-    path = open("path.data").read().replace("/", "\\").replace("user", user)
-    if not os.path.exists(path):
-        getPath()
-except:
-    print(f"{bc.OKBLUE}[INFO]{bc.ENDC}", "Osu! folder not found, asking user")
-    getPath()
+    def downloadSongs(self):
+        #disable tk window
+        self.wait = True
+        self.menuBar.entryconfig(1, state=DISABLED)
+        self.menuBar.entryconfig(2, state=DISABLED)
+        self.menuBar.entryconfig(3, state=DISABLED)
+        self.menuBar.entryconfig(4, state=DISABLED)
 
-importSongs()
+        self.title("osu!player - Downloading songs")
+        self.songDownloader.run()
+        try:
+            os.rmdir("temp")
+        except:
+            print(f"{bc.FAIL}[ERROR]{bc.ENDC}", "Can't delete temp folder")
+        self.importSongs()
+        self.title("osu!player")
 
-#run Discord RPC
-threadA = threading.Thread(target= changeStatus)
-threadA.start()
+        #enable tk window
+        self.menuBar.entryconfig(1, state=NORMAL)
+        self.menuBar.entryconfig(2, state=NORMAL)
+        self.menuBar.entryconfig(3, state=NORMAL)
+        self.menuBar.entryconfig(4, state=NORMAL)
+        self.wait = False
 
-#after window creation config (icon and shutdown button)
-root.update()
-root.iconbitmap("osu-icon-28.ico")
-root.protocol("WM_DELETE_WINDOW", shutdown)
 
-#auto check update
-testVersion(launch=True)
+    def shutdown(self):
+        #save data to files
+        open("data/volume.sav", 'w').write(str(int(self.volume.get())))
+        open("data/shuffle.sav", 'w').write(str(self.shuffleVar))
+        open("data/loop.sav", 'w').write(str(self.loopVar))
+        open("data/kcontrol.sav", 'w').write(str(self.useKeyboard))
+        self.runVar = False
 
-#mainloop
-while run:
-    if not wait:
-        root.update()
-        testPlaying()
-        changeVol()
-        kinput()
 
-quit()
+if __name__ == "__main__":
+    app = Player()
+    app.run()
