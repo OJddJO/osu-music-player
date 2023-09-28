@@ -44,6 +44,7 @@ class Player(Tk):
 
         #load saved data
         try:
+            loop = "loop"
             savedData = {
                 "volume": open("data/volume.sav").read(),
                 "shuffle": eval(open("data/shuffle.sav").read()),
@@ -209,7 +210,31 @@ class Player(Tk):
         self.searchBarToggle.set(0)
         self.menuBar.add_checkbutton(label="Search bar", variable=self.searchBarToggle, command=self.searchToggle)
         # ----------------------------------------------------------------
-
+        #set buttons
+        if not self.shuffleVar:
+            self.shuffleButton.grid_remove()
+            self.notShuffleButton.grid()
+        else:
+            self.shuffleButton.grid()
+            self.notShuffleButton.grid_remove()
+        if self.loopVar == False:
+            self.loop2Button.grid_remove()
+            self.loopButton.grid_remove()
+            self.notLoopButton.grid()
+        elif self.loopVar == True:
+            self.loop2Button.grid_remove()
+            self.notLoopButton.grid_remove()
+            self.loopButton.grid()
+        elif self.loopVar == "loop":
+            self.loopButton.grid_remove()
+            self.notLoopButton.grid_remove()
+            self.loop2Button.grid()
+        if not self.useKeyboard:
+            self.kcButton.grid_remove()
+            self.notKcButton.grid()
+        else:
+            self.kcButton.grid()
+            self.notKcButton.grid_remove()
         self.discordPresence()
         self.changeStatusThread = threading.Thread(target=self.changeStatus)
         self.update()
@@ -295,16 +320,16 @@ class Player(Tk):
 
     def testPlaying(self):
         if not self.channel.get_busy():
-            if self.loop:
-                if self.state != 'Paused' and self.state != 'Idle':
-                    self.inactiveTicks += 1
-                    if self.inactiveTicks == 1000:
-                        self.next()
-            elif self.loop == 'loop':
+            if self.loopVar == 'loop':
                 if self.state != 'Paused' and self.state != 'Idle':
                     self.inactiveTicks += 1
                     if self.inactiveTicks == 1000:
                         self.play()
+            elif self.loopVar==True:
+                if self.state != 'Paused' and self.state != 'Idle':
+                    self.inactiveTicks += 1
+                    if self.inactiveTicks == 1000:
+                        self.next()
             else:
                 self.stop()
         else:
@@ -449,18 +474,21 @@ class Player(Tk):
 
     def loop(self):
         loopList = [False, True, 'loop']
-        index = loopList.index(self.loopVar)-1
+        index = loopList.index(self.loopVar)+1
         if index > 2:
             index = 0
         self.loopVar = loopList[index]
         if self.loopVar == False:
             self.loop2Button.grid_remove()
+            self.loopButton.grid_remove()
             self.notLoopButton.grid()
         elif self.loopVar == True:
+            self.loop2Button.grid_remove()
             self.notLoopButton.grid_remove()
             self.loopButton.grid()
-        elif self.loopVar == 'loop':
+        elif self.loopVar == "loop":
             self.loopButton.grid_remove()
+            self.notLoopButton.grid_remove()
             self.loop2Button.grid()
 
 
