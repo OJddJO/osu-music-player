@@ -254,7 +254,7 @@ class Player(Tk):
                 self.changeVol()
                 self.kinput()
         self.quit()
-        quit()
+        exit()
 
 
     def discordPresence(self):
